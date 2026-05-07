@@ -1,0 +1,132 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.CreatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vmMain="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             d:DataContext="{d:DesignInstance Type=vmMain:CreatorViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+             d:DesignWidth="1000">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="10*" />
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <ListBox Grid.Row="0"
+                     Width="200"
+                     Style="{StaticResource RoundedListBoxStyle}"
+                     ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}"
+                     ItemsSource="{Binding Databases}"
+                     SelectedItem="{Binding SelectedDatabase}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Grid.Row="1"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Content="Создать БД"
+                    Command="{Binding AddDatabaseCommand}" />
+
+            <Button Grid.Row="2"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding ChangeDatabaseCommand}"
+                    Content="Редактировать БД" />
+
+            <Button Grid.Row="3"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding DeleteDatabaseCommand}"
+                    Content="Удалить БД" />
+        </Grid>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="94*" />
+                <RowDefinition Height="137*" />
+                <RowDefinition Height="23*" />
+                <RowDefinition Height="23*" />
+                <RowDefinition Height="23*" />
+            </Grid.RowDefinitions>
+
+            <ListBox Grid.Row="0"
+                     Width="200"
+                     Style="{StaticResource RoundedListBoxStyle}"
+                     ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}"
+                     ItemsSource="{Binding SelectedDatabase.Records}"
+                     SelectedItem="{Binding SelectedRecord}"
+                     Margin="5,5,5,5"
+                     Grid.RowSpan="2">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding IndexValue}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Button Grid.Row="2"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding AddRecordCommand}"
+                    Content="Добавить запись"
+                    Margin="5,5,5,5" />
+
+            <Button Grid.Row="3"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding ChangeRecordCommand}"
+                    Content="Редактировать запись"
+                    Margin="5,5,5,5" />
+
+            <Button Grid.Row="4"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding DeleteRecordCommand}"
+                    Content="Удалить запись"
+                    Margin="5,5,5,5" />
+        </Grid>
+
+        <ScrollViewer Grid.Column="3">
+            <WrapPanel Visibility="{Binding SelectedRecord, Converter={StaticResource NullToVisibilityConverter}}">
+                <cc:LabeledValueBox LabelText="Описание"
+                                    ValueText="{Binding SelectedRecord.Description}" />
+
+                <ItemsControl ItemsSource="{Binding SelectedRecord.Fields}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <cc:LabeledValueBox LabelText="{Binding Key}"
+                                                ValueText="{Binding Value}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </WrapPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

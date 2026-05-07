@@ -1,0 +1,251 @@
+﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.SettingSearchView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+        xmlns:viewmodel="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+        xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+        d:DataContext="{d:DesignInstance Type=viewmodel:ConnectionViewModel}"
+        mc:Ignorable="d"
+        Height="500"
+        Width="400"
+        Title="Настройки поиска"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+    <Window.Resources>
+        <assist:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="5*" />
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Мера защиты:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <ComboBox Grid.Column="1"
+                          Margin="0"
+                          DisplayMemberPath="DispayedName"
+                          Style="{StaticResource RoundedComboBoxStyle}"            
+                          ItemsSource="{Binding ProtectionMeasures}"
+                          SelectedItem="{Binding SelectedProtectionMeasures}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Специалист по ЗИ:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <ComboBox Grid.Column="1"
+                          DisplayMemberPath="NameOrgan"
+                          Margin="0"
+                          Style="{StaticResource RoundedComboBoxStyle}"                    
+                          ItemsSource="{Binding Specialists}"
+                          SelectedItem="{Binding SelectedSpecialist}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Негативное последствие:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <ComboBox Grid.Column="1"
+                          Margin="0"
+                          Style="{StaticResource RoundedComboBoxStyle}"
+                          ItemsSource="{Binding Consequences}"
+                          SelectedItem="{Binding SelectedConsequence}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding  Name}"
+                                       Width="500"
+                                       TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="3"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Технология оценки риска:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <ComboBox Grid.Column="1"
+                          Margin="0"
+                          Style="{StaticResource RoundedComboBoxStyle}"
+                          ItemsSource="{Binding Technologys}"
+                          SelectedItem="{Binding SelectedTechnology}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding  MethodName}"
+                                       Width="500"
+                                       TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="4"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Алгоритм:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <ComboBox Grid.Column="1"
+                          Margin="0"
+                          Style="{StaticResource RoundedComboBoxStyle}"
+                          ItemsSource="{Binding Algorithms}"
+                          SelectedItem="{Binding SelectedAlgorithm}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="5"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Используемые ИЗ:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <ListBox Grid.Column="1"
+                         ItemsSource="{Binding AvailableDatabasesConfig}"
+                         Margin="2"
+                         SelectionMode="Multiple"
+                         BorderBrush="LightGray">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding DisplayedName}"
+                                      IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                      Margin="2" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="6"
+                BorderBrush="Black"
+                BorderThickness="1"
+                CornerRadius="6"
+                Margin="2">
+            <Grid Margin="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           VerticalAlignment="Center"
+                           Text="Использовать  фильтрацию по CVSS:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold" />
+
+                <CheckBox Grid.Column="1"
+                          VerticalAlignment="Center"
+                          Margin="20 0 0 0"
+                          Cursor="Hand"
+                          IsChecked="{Binding FilteringCvss}" />
+            </Grid>
+        </Border>
+        
+        <Button Grid.Row="7"
+                Content="Назад"
+                Margin="2"
+                Style="{StaticResource OutlinedGrayButtonStyle}"
+                Command="{Binding CloseSettingSearchCommand}" />
+    </Grid>
+</Window>

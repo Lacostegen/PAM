@@ -1,0 +1,145 @@
+﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.Main.DatabaseManagerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Main"
+        xmlns:vmMain="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+        d:DataContext="{d:DesignInstance Type=vmMain:CreatorViewModel}"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Title="Работа с БД"
+        Height="500"
+        Width="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="6*" />
+            <RowDefinition Height="1.5*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Название БД:"
+                           VerticalAlignment="Center"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           Margin="5" />
+
+                <TextBox Grid.Column="1"
+                         Margin="1"
+                         Style="{StaticResource RoundedTextBoxStyle}"
+                         IsEnabled="{Binding IsEnabledEnteredNameDatabase}"
+                         Text="{Binding EnteredNameDatabase}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Название индексатора:"
+                           VerticalAlignment="Center"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           Margin="5" />
+
+                <TextBox Grid.Column="1"
+                         Margin="1"
+                         Style="{StaticResource RoundedTextBoxStyle}"
+                         Text="{Binding EnteredNameIndexPrefix}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                BorderBrush="Black"
+                BorderThickness="1"
+                CornerRadius="6"
+                Margin="2">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition  Width="*" />
+                    <ColumnDefinition Width="0.3*" />
+                    <ColumnDefinition Width="0.3*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Название поля:"
+                           FontSize="15"
+                           VerticalAlignment="Center"
+                           FontFamily="Consolas"
+                           Margin="5" />
+
+                <TextBox Grid.Column="1"
+                         Margin="1"
+                         Style="{StaticResource RoundedTextBoxStyle}"
+                         Text="{Binding EnteredNameField, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Grid.Column="2"
+                        Content="➕"
+                        FontSize="7"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding AddFieldInDatabaseCommand}" />
+
+                <Button Grid.Column="3"
+                        Content="➖"
+                        FontSize="7"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding RemoveFieldInDatabaseCommand}" />
+            </Grid>
+        </Border>
+
+        <ListBox Grid.Row="3"
+                 Style="{StaticResource RoundedListBoxStyle}"
+                 ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}"
+                 ItemsSource="{Binding EnteredFieldsDatabase}"
+                 SelectedItem="{Binding SelectedFieldDatabase}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding .}"
+                               TextWrapping="Wrap"
+                               Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="Применить"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding ApplyDatabaseManagerCommand}" />
+
+            <Button Grid.Column="1"
+                    Content="Назад"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding CloseDatabaseManagerCommand}" />
+        </Grid>
+    </Grid>
+</Window>

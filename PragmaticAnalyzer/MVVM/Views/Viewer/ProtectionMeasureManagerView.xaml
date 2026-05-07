@@ -1,0 +1,152 @@
+﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.ProtectionMeasureManagerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Viewer"
+        mc:Ignorable="d"
+        Height="600"
+        Width="500"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="40" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Наименование группы мер защиты"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource MainTextBlockStyle}"
+                   FontWeight="Bold" />
+
+        <TextBox Grid.Row="1"
+                 Name="NameGroupMeasure"
+                 Style="{StaticResource RoundedTextBoxStyle}" />
+
+        <TextBlock Grid.Row="2"
+                   Text="Условное обозначение и номер меры защиты"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource MainTextBlockStyle}"
+                   FontWeight="Bold" />
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox Grid.Column="0"
+                     Name="NameMeasureTextBox"
+                     TextAlignment="Center"
+                     Style="{StaticResource RoundedTextBoxStyle}"
+                     PreviewKeyDown="NameMeasureTextBoxPreviewKeyDown" />
+
+            <TextBlock Grid.Column="1"
+                       Text="."
+                       FontFamily="Consolas"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       FontSize="25"
+                       Margin="5" />
+
+            <TextBox Grid.Column="2"
+                     Name="NumberMeasureTextBox"
+                     TextAlignment="Center"
+                     Style="{StaticResource RoundedTextBoxStyle}"
+                     PreviewKeyDown="NumberMeasureTextBoxPreviewKeyDown" />
+
+        </Grid>
+
+        <TextBlock Grid.Row="4"
+                   Text="Полное наименование меры защиты"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource MainTextBlockStyle}"
+                   FontWeight="Bold" />
+
+        <TextBox Grid.Row="5"
+                 Name="DescriptionMeasure"
+                 Style="{StaticResource RoundedTextBoxStyle}" />
+
+        <TextBlock Grid.Row="6"
+                   Style="{StaticResource MainTextBlockStyle}"
+                   Text="Классы защищенности автоматизированной системы управления"
+                   HorizontalAlignment="Center"
+                   FontWeight="Bold" />
+
+        <Grid Grid.Row="7">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Grid.Column="0"
+                       Text="1"
+                       FontFamily="Consolas"
+                       FontSize="20"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center" />
+
+            <TextBlock Grid.Row="0"
+                       Grid.Column="1"
+                       Text="2"
+                       FontFamily="Consolas"
+                       FontSize="20"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center" />
+
+            <TextBlock Grid.Row="0"
+                       Grid.Column="2"
+                       Text="3"
+                       FontFamily="Consolas"
+                       FontSize="20"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center" />
+
+            <CheckBox Name="ProtectionClassOneCheckBox"
+                      Grid.Row="1"
+                      Grid.Column="0"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center" />
+
+            <CheckBox Name="ProtectionClassTwoCheckBox"
+                      Grid.Row="1"
+                      Grid.Column="1"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center" />
+
+            <CheckBox Name="ProtectionClassThreeCheckBox"
+                      Grid.Row="1"
+                      Grid.Column="2"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center" />
+        </Grid>
+
+        <StackPanel Grid.Row="8"
+                    Orientation="Vertical">
+            <Button Content="Готово"
+                    Name="DoneButton"
+                    Style="{StaticResource OutlinedGrayButtonStyle}" />
+
+            <Button Content="Отмена"
+                    Name="CancelButton"
+                    Style="{StaticResource OutlinedGrayButtonStyle}" />
+        </StackPanel>
+    </Grid>
+</Window>

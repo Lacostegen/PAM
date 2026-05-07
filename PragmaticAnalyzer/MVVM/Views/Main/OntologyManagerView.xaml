@@ -1,0 +1,116 @@
+﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.Main.OntologyManagerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Main"
+        xmlns:vmMain="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+        d:DataContext="{d:DesignInstance Type=vmMain:OntologyViewModel}"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        Height="450"
+        Width="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="0.4*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="Название"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           Margin="0 5 5 5" />
+
+                <TextBox Grid.Row="1"
+                         Height="100"
+                         Style="{StaticResource RoundedTextBoxStyle}"       
+                         Text="{Binding EnteredName}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                BorderBrush="Black"
+                BorderThickness="1"
+                Margin="2"
+                CornerRadius="6">
+            <Grid Margin="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="Описание"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           Margin="0 5 5 5" />
+
+                <TextBox Grid.Row="1"
+                         Style="{StaticResource RoundedTextBoxStyle}"
+                         Text="{Binding EnteredDescription}" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                BorderBrush="Black"
+                BorderThickness="1"
+                CornerRadius="6"
+                Margin="5">
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition  Width="0,2*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Text="Добавить сущность в выбранную онтологию:"
+                           FontSize="15"
+                           FontFamily="Consolas" />
+
+                <CheckBox Grid.Row="0"
+                          Grid.Column="1"
+                          Margin="5 0 0 0"
+                          VerticalAlignment="Center"
+                          IsEnabled="{Binding IsEnabledCheckBox}"
+                          IsChecked="{Binding AddNewEntity}" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="Применить"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding ApplyCommand}" />
+
+            <Button Grid.Column="1"
+                    Content="Назад"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding BackCommand}" />
+        </Grid>
+    </Grid>
+</Window>

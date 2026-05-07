@@ -1,0 +1,83 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.OntologyView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vmMain="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             d:DataContext="{d:DesignInstance Type=vmMain:OntologyViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="550"
+             d:DesignWidth="800">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="70" />
+        </Grid.RowDefinitions>
+
+        <TreeView ItemsSource="{Binding Ontologys}"
+                  Style="{StaticResource RoundedTreeViewStyle}"
+                  ItemContainerStyle="{StaticResource RoundedTreeViewItemStyle}">
+            <i:Interaction.Triggers>
+                <i:EventTrigger EventName="SelectedItemChanged">
+                    <i:InvokeCommandAction Command="{Binding SelectedItemChangedCommand}"
+                                           CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=TreeView}}" />
+                </i:EventTrigger>
+            </i:Interaction.Triggers>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Entities}">
+                    <TextBlock Text="{Binding Name}"
+                               Style="{StaticResource MainTextBlockStyle}"
+                               Margin="1"
+                               Width="600" />
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+
+        <cc:LabeledValueBox  Grid.Column="1"
+                             LabelText="Описание"
+                             ValueText="{Binding SelectedItem.Description}"
+                             Visibility="{Binding SelectedItem, Converter={StaticResource NullToVisibilityConverter}}" />
+
+        <Border BorderBrush="Black"
+                BorderThickness="1"
+                Padding="2"
+                Grid.Column="0"
+                Grid.Row="1"
+                Grid.ColumnSpan="3"
+                Margin="5">
+            <StackPanel Grid.Column="0"
+                        Margin="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center">
+                <Button Content="Загрузить"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding LoadCommand}" />
+
+                <Button Content="Добавить"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding AddCommand}" />
+
+                <Button Content="Изменить"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding ChangeCommand}" />
+
+                <Button Content="Удалить"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding DeleteCommand}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

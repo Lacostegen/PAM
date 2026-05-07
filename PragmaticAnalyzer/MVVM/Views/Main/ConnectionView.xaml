@@ -1,0 +1,602 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.ConnectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             xmlns:db="clr-namespace:PragmaticAnalyzer.Databases"
+             d:DataContext="{d:DesignInstance vm:ConnectionViewModel}"
+             mc:Ignorable="d"
+             d:Height="800"
+             d:Width="1200">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <DataTemplate x:Key="ParameterTemplateTechniquesTactics">
+            <Border Style="{StaticResource MainBorderStyle}"
+                    BorderThickness="2">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Техника: "
+                                   Style="{StaticResource MainTextBlockStyle}"
+                                   FontWeight="Bold"
+                                   FontSize="20" />
+
+                        <TextBlock Text="{Binding Name}"
+                                   Style="{StaticResource MainTextBlockStyle}"
+                                   FontWeight="Bold"
+                                   FontSize="20" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding Description}"
+                               Style="{StaticResource MainTextBlockStyle}"
+                               TextWrapping="Wrap"
+                               FontSize="15"
+                               Width="300" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0.5*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Grid.Column="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Текстовое описание:"
+                           FontSize="15"
+                           FontFamily="Consolas"
+                           FontWeight="Bold"
+                           Margin="5"
+                           TextWrapping="Wrap" />
+
+                <TextBox Grid.Column="1"
+                         Style="{StaticResource RoundedTextBoxStyle}"
+                         Text="{Binding RequestText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <Button Grid.Column="0"
+                        Content="Сформировать отчет"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding GenerateCommand}" />
+
+                <Button Grid.Column="1"
+                        Content="Сохранить отчет"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding SaveReportCommand}" />
+
+                <Button Grid.Column="2"
+                        Content="Настройки поиска"
+                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Command="{Binding SettingSearchCommand}" />
+            </Grid>
+
+            <ProgressBar Grid.Row="2"
+                         Style="{StaticResource RoundedProgressBarStyle}"
+                         IsIndeterminate="{Binding Progress}" />
+        </Grid>
+
+        <Grid Grid.Row="1"
+              Grid.Column="0"
+              Visibility="{Binding ReportVisibility}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Row="0"
+                  Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="Коэффициент близости:"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Style="{StaticResource MainTextBlockStyle}" />
+
+                <ListBox Grid.Row="1"
+                         Width="100"
+                         Style="{StaticResource RoundedListBoxStyle}"
+                         ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}"
+                         ItemsSource="{Binding Reports}"
+                         SelectedItem="{Binding SelectedReport}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Coefficient}"
+                                       TextWrapping="Wrap"
+                                       Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=Foreground}" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+
+            <Border Grid.Row="0"
+                    Grid.Column="1"
+                    BorderBrush="Black"
+                    BorderThickness="1"
+                    CornerRadius="5"
+                    Margin="5"
+                    DataContext="{Binding SelectedReport}"
+                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Отчет"
+                               FontWeight="Bold"
+                               FontSize="30"
+                               FontFamily="Consolas"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center" />
+
+                    <ScrollViewer Grid.Row="1">
+                        <WrapPanel Orientation="Horizontal">
+
+                            <!--БД Специалист по ЗИ-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Specialist}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Специалист по ЗИ"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Наименование ОВУ"
+                                                            ValueText="{Binding  NameOrgan}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование вышестоящего ОВУ"
+                                                            ValueText="{Binding  NameHighestOrgan}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование подчиненного ОВУ"
+                                                            ValueText="{Binding  NameSubordinateOrgan}" />
+
+                                        <cc:LabeledValueBox LabelText="Статус по выявленной уязвимости"
+                                                            ValueText="{Binding  StatusVulnerability}" />
+
+                                        <cc:LabeledValueBox LabelText="Предпринятые действия"
+                                                            ValueText="{Binding  ActionsTaken}" />
+
+                                        <cc:LabeledValueBox LabelText="Список принятых мер защиты"
+                                                            ValueText="{Binding  UsingMeasuresToString}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименования взаимодействующих ОВУ"
+                                                            ValueText="{Binding  NameInteractingOrgansToString}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Негативные последствия-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Consequence}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Негативные последствия"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Порядковый номер"
+                                                            ValueText="{Binding  Number}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование последствия"
+                                                            ValueText="{Binding  Name}" />
+
+                                        <cc:LabeledValueBox LabelText="Ущерб последствия"
+                                                            ValueText="{Binding  Damage}" />
+
+                                        <cc:LabeledValueBox LabelText="Связанные угрозы"
+                                                            ValueText="{Binding  NameThreatsToString}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Технологии оценки риска-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Technology}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Технологии оценки риска"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Метод"
+                                                            ValueText="{Binding  MethodName}" />
+
+                                        <cc:LabeledValueBox LabelText="Описание"
+                                                            ValueText="{Binding Description}" />
+
+                                        <cc:LabeledValueBox LabelText="Применение"
+                                                            ValueText="{Binding  Usage}" />
+
+                                        <cc:LabeledValueBox LabelText="Масштаб"
+                                                            ValueText="{Binding  Scale}" />
+
+                                        <cc:LabeledValueBox LabelText="Временной горизонт"
+                                                            ValueText="{Binding  Horizont}" />
+
+                                        <cc:LabeledValueBox LabelText="Уровень принятия решения"
+                                                            ValueText="{Binding  Level}" />
+
+                                        <cc:LabeledValueBox LabelText="Необходимость информации/данных"
+                                                            ValueText="{Binding  Necessity}" />
+
+                                        <cc:LabeledValueBox LabelText="Опыт специалиста"
+                                                            ValueText="{Binding  Experience}" />
+
+                                        <cc:LabeledValueBox LabelText="Качеств/колличеств"
+                                                            ValueText="{Binding  Сharacteristic}" />
+
+                                        <cc:LabeledValueBox LabelText="Применение усилий"
+                                                            ValueText="{Binding  Effort}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Нарушителей-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Violator}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Нарушителей"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Название группировки"
+                                                            ValueText="{Binding GroupName}" />
+
+                                        <cc:LabeledValueBox LabelText="Описание"
+                                                            ValueText="{Binding Description}" />
+
+                                        <cc:LabeledValueBox LabelText="Государственная принадлежность"
+                                                            ValueText="{Binding StateAffiliation}" />
+
+                                        <cc:LabeledValueBox LabelText="Второстепенные названия"
+                                                            ValueText="{Binding AlternateNames}" />
+
+                                        <cc:LabeledValueBox LabelText="Объекты атаки"
+                                                            ValueText="{Binding AttackTargets}" />
+
+                                        <cc:LabeledValueBox LabelText="Известные атаки"
+                                                            ValueText="{Binding KnownAttacks}" />
+
+                                        <cc:LabeledValueBox LabelText="Применяемые инструменты"
+                                                            ValueText="{Binding UsedTools}" />
+
+                                        <cc:LabeledValueBox LabelText="Цели атаки"
+                                                            ValueText="{Binding AttackObjectives}" />
+
+                                        <cc:LabeledValueBox LabelText="Применяемые тактики"
+                                                            ValueText="{Binding TacticsUsedToString}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Меры защиты-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding ProtectionMeasure}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Меры защиты"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Условное обозначение"
+                                                            ValueText="{Binding DispayedName}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование группы мер защиты"
+                                                            ValueText="{Binding NameGroup}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование меры защиты"
+                                                            ValueText="{Binding FullName}" />
+
+                                        <cc:LabeledValueBox LabelText="Классы защищенности АСУ"
+                                                            ValueText="{Binding SecurityClasses}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД угроз-->
+                            <Border  Style="{StaticResource MainBorderStyle}"
+                                     DataContext="{Binding Threat}"
+                                     Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Угроз"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Идентификатор УБИ"
+                                                            ValueText="{Binding Id}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование УБИ"
+                                                            ValueText="{Binding Name}" />
+
+                                        <cc:LabeledValueBox LabelText="Описание"
+                                                            ValueText="{Binding Description}" />
+
+                                        <cc:LabeledValueBox LabelText="Источник угрозы (характеристика и потенциал нарушителя)"
+                                                            ValueText="{Binding Source}" />
+
+                                        <cc:LabeledValueBox LabelText="Объект воздействия"
+                                                            ValueText="{Binding ObjectInfluence}" />
+
+                                        <cc:LabeledValueBox LabelText="Нарушение конфиденциальности"
+                                                            ValueText="{Binding PrivacyViolation}" />
+
+                                        <cc:LabeledValueBox LabelText="Нарушение целостности"
+                                                            ValueText="{Binding IntegrityViolation}" />
+
+                                        <cc:LabeledValueBox LabelText="Нарушение доступности"
+                                                            ValueText="{Binding AccessibilityViolation}" />
+
+                                        <cc:LabeledValueBox LabelText="Дата включения угрозы в БнД УБИ"
+                                                            ValueText="{Binding DateInclusion}" />
+
+                                        <cc:LabeledValueBox LabelText="Дата последнего изменения данных"
+                                                            ValueText="{Binding DateChange}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Уязвимостей-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Vulnerabilitie}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Уязвимостей"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Идентификатор"
+                                                            ValueText="{Binding Identifier}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование уязвимости"
+                                                            ValueText="{Binding Name}" />
+
+                                        <cc:LabeledValueBox LabelText="Описание уязвимости"
+                                                            ValueText="{Binding Description}" />
+
+                                        <cc:LabeledValueBox LabelText="Вендор ПО"
+                                                            ValueText="{Binding Vendor}" />
+
+                                        <cc:LabeledValueBox LabelText="Название ПО"
+                                                            ValueText="{Binding NameSoftware}" />
+
+                                        <cc:LabeledValueBox LabelText="Версия ПО"
+                                                            ValueText="{Binding Version}" />
+
+                                        <cc:LabeledValueBox LabelText="Тип ПО"
+                                                            ValueText="{Binding Type}" />
+
+                                        <cc:LabeledValueBox LabelText="Наименование ОС и тип аппаратной платформы"
+                                                            ValueText="{Binding NameOperatingSystem}" />
+
+                                        <cc:LabeledValueBox LabelText="Класс уязвимости"
+                                                            ValueText="{Binding Class}" />
+
+                                        <cc:LabeledValueBox LabelText="Дата выявления"
+                                                            ValueText="{Binding Date}" />
+
+                                        <cc:LabeledValueBox LabelText="CVSS 2.0"
+                                                            ValueText="{Binding CvssTwo}" />
+
+                                        <cc:LabeledValueBox LabelText="CVSS 3.0"
+                                                            ValueText="{Binding CvssThree}" />
+
+                                        <cc:LabeledValueBox LabelText="Уровень опасности уязвимости"
+                                                            ValueText="{Binding DangerLevel}" />
+
+                                        <cc:LabeledValueBox LabelText="Возможные меры по устранению"
+                                                            ValueText="{Binding Measure}" />
+
+                                        <cc:LabeledValueBox LabelText="Наличие эксплойта"
+                                                            ValueText="{Binding Exploit}" />
+
+                                        <cc:LabeledValueBox LabelText="Информация об устранении"
+                                                            ValueText="{Binding Information}" />
+
+                                        <cc:LabeledValueBox LabelText="Ссылки на источники"
+                                                            ValueText="{Binding Links}" />
+
+                                        <cc:LabeledValueBox LabelText="Идентификаторы других систем описаний уязвимости"
+                                                            ValueText="{Binding OtherIdentifier}" />
+
+                                        <cc:LabeledValueBox LabelText="Прочая информация"
+                                                            ValueText="{Binding OtherInformation}" />
+
+                                        <cc:LabeledValueBox LabelText="Связь с инцидентами ИБ"
+                                                            ValueText="{Binding Incident}" />
+
+                                        <cc:LabeledValueBox LabelText="Способ эксплуатации"
+                                                            ValueText="{Binding OperatingMethod}" />
+
+                                        <cc:LabeledValueBox LabelText="Способ устранения"
+                                                            ValueText="{Binding EliminationMethod}" />
+
+                                        <cc:LabeledValueBox LabelText="Описание ошибки CWE"
+                                                            ValueText="{Binding DescriptionCwe}" />
+
+                                        <cc:LabeledValueBox LabelText="Тип ошибки CWE"
+                                                            ValueText="{Binding Cwe}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Эксплойтов-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Exploit}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Экслойтов"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Идентификатор"
+                                                            ValueText="{Binding Id}" />
+
+                                        <cc:LabeledValueBox LabelText="Название"
+                                                            ValueText="{Binding Name}" />
+
+                                        <cc:LabeledValueBox LabelText="CVE"
+                                                            ValueText="{Binding Cve}" />
+
+                                        <cc:LabeledValueBox LabelText="Описание"
+                                                            ValueText="{Binding Description}" />
+
+                                        <cc:LabeledValueBox LabelText="Автор"
+                                                            ValueText="{Binding Author}" />
+
+                                        <cc:LabeledValueBox LabelText="Тип"
+                                                            ValueText="{Binding Type}" />
+
+                                        <cc:LabeledValueBox LabelText="Платформа"
+                                                            ValueText="{Binding Platform}" />
+
+                                        <cc:LabeledValueBox LabelText="Дата публикации"
+                                                            ValueText="{Binding DatePublication}" />
+
+                                        <cc:LabeledValueBox LabelText="Дата публикации"
+                                                            ValueText="{Binding DatePublication}" />
+
+                                        <Border BorderThickness="2"
+                                                BorderBrush="Black"
+                                                CornerRadius="6"
+                                                Margin="5"
+                                                Background="White">
+                                            <StackPanel>
+                                                <TextBlock Text="Файл экслойта"
+                                                           FontSize="15"
+                                                           FontWeight="Bold"
+                                                           Style="{StaticResource MainTextBlockStyle}" />
+                                                <Button Content="Открыть"
+                                                        Style="{StaticResource  OutlinedGrayButtonStyle}"
+                                                        Command="{Binding OpenFileCommand}"
+                                                        CommandParameter="{Binding Id}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Техник и тактик-->
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    DataContext="{Binding Tactic}"
+                                    Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Источник знаний: БД Техник и тактик"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Описание"
+                                                            ValueText="{Binding Description}" />
+
+                                        <ItemsControl ItemsSource="{Binding Techniques}"
+                                                      ItemTemplate="{StaticResource ParameterTemplateTechniquesTactics}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--БД Динамических источников-->
+                            <ItemsControl ItemsSource="{Binding DynamicRecords}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type db:DynamicRecord}">
+                                        <Border Style="{StaticResource MainBorderStyle}"
+                                                Margin="5"
+                                                Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding NameDatadase, StringFormat=Источник знаний: БД {0}}"
+                                                           Style="{StaticResource MainTextBlockStyle}"
+                                                           FontWeight="Bold"
+                                                           FontSize="20" />
+
+                                                <WrapPanel>
+                                                    <cc:LabeledValueBox LabelText="Описание"
+                                                                        ValueText="{Binding Description}" />
+
+                                                    <ItemsControl ItemsSource="{Binding Fields}">
+                                                        <ItemsControl.ItemsPanel>
+                                                            <ItemsPanelTemplate>
+                                                                <WrapPanel />
+                                                            </ItemsPanelTemplate>
+                                                        </ItemsControl.ItemsPanel>
+
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <cc:LabeledValueBox LabelText="{Binding Key}"
+                                                                                    ValueText="{Binding Value}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </WrapPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </WrapPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

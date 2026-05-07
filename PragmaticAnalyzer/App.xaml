@@ -1,0 +1,21 @@
+﻿<Application x:Class="PragmaticAnalyzer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/HyperlinkButtonStyle.xaml" />
+                <ResourceDictionary Source="/Styles/OutlinedGrayButtonStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedProgressBarStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedComboBoxStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedTextBoxStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedListBoxStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedListBoxItemStyle.xaml" />
+                <ResourceDictionary Source="/Styles/MainTextBlockStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedTreeViewStyle.xaml" />
+                <ResourceDictionary Source="/Styles/RoundedTreeViewxItemStyle.xaml" />
+                <ResourceDictionary Source="/Styles/MainBorderStyle.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

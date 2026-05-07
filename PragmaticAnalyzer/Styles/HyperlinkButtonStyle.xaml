@@ -1,0 +1,46 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="HyperlinkButtonStyle"
+           TargetType="Button">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <TextBlock x:Name="TextBlock"
+                               Text="{TemplateBinding Content}"
+                               FontSize="{TemplateBinding FontSize}"
+                               FontFamily="Franklin Gothic"
+                               TextDecorations="Underline"
+                               Foreground="Blue"
+                               Cursor="Hand"
+                               TextAlignment="Left"
+                               VerticalAlignment="Center"
+                               HorizontalAlignment="Center" 
+                               TextWrapping="Wrap"/>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver"
+                                 Value="True">
+                            <Setter TargetName="TextBlock"
+                                    Property="Foreground"
+                                    Value="DodgerBlue" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled"
+                                 Value="False">
+                            <Setter TargetName="TextBlock"
+                                    Property="Foreground"
+                                    Value="Gray" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        
+        <Setter Property="Background"
+                Value="Transparent" />
+        
+        <Setter Property="BorderBrush"
+                Value="Transparent" />
+        
+        <Setter Property="Focusable"
+                Value="False" />
+    </Style>
+</ResourceDictionary>

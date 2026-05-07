@@ -1,0 +1,118 @@
+﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.TacticManagerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Viewer"
+        mc:Ignorable="d"
+        Height="650"
+        Width="500"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="45" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    Margin="5"
+                    Orientation="Horizontal">
+            <TextBlock Text="Т"
+                       FontSize="30"
+                       FontFamily="Consolas"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center" />
+
+            <Border Margin="10 0 10 0"
+                    BorderBrush="Black"
+                    BorderThickness="0.5">
+                <TextBlock FontSize="15"
+                           Width="30"
+                           Name="NumberTextBlock"
+                           TextAlignment="Center" />
+            </Border>
+
+            <TextBlock Text="."
+                       FontFamily="Consolas"
+                       VerticalAlignment="Bottom"
+                       FontSize="20" />
+
+            <Border Margin="10 0 0 0"
+                    BorderBrush="Black"
+                    BorderThickness="0.5">
+                <TextBlock FontSize="15"
+                           Width="30"
+                           Name="SubNumberTextBlock"
+                           TextAlignment="Center" />
+            </Border>
+        </StackPanel>
+
+        <TextBlock Grid.Row="1"
+                   Text="Описание"
+                   Style="{StaticResource MainTextBlockStyle}"
+                   FontWeight="Bold" />
+
+        <TextBox Grid.Row="2"
+                 Name="DescriptionTextBox"
+                 Style="{StaticResource RoundedTextBoxStyle}" />
+
+        <Grid Grid.Row="3"
+              Margin="5">
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition  Width="0,2*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Row="0"
+                       Text="Техника:"        
+                       Style="{StaticResource MainTextBlockStyle}" />
+
+            <CheckBox Grid.Row="0"
+                      Grid.Column="1"
+                      Name="OptionCheckBox"
+                      VerticalAlignment="Center"
+                      IsChecked="False"
+                      Margin="5 0 0 0"
+                      Checked="OptionCheckBoxChecked"
+                      Unchecked="OptionCheckBoxUnchecked">
+            </CheckBox>
+
+            <Button Grid.Row="0"
+                    Grid.Column="2"
+                    Grid.RowSpan="2"
+                    Content="Готово"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Name="DoneButton" />
+          
+            <TextBlock  Grid.Row="1"
+                        Grid.Column="0"
+                        Text="Добавить технику в:"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource MainTextBlockStyle}" />
+
+            <ComboBox Grid.Row="1"
+                      Grid.Column="1"
+                      Name="ListTechniqueComboBox"
+                      ItemsSource="{Binding Tactics}"
+                      SelectionChanged="ListTechniqueComboBoxSelectionChanged"
+                      Style="{StaticResource RoundedComboBoxStyle}"
+                      IsEnabled="False">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Name}"
+                                   FontFamily="Consolas" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </Grid>
+    </Grid>
+</Window>

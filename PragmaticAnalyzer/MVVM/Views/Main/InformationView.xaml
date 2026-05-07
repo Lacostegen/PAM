@@ -1,0 +1,142 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.InformationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:config="clr-namespace:PragmaticAnalyzer.Configs"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             d:DataContext="{d:DesignInstance Type=vm:InformationViewModel}"
+             mc:Ignorable="d"
+             x:Name="Window"
+             d:DesignHeight="1000"
+             d:DesignWidth="1000">
+    <Grid>
+        <WrapPanel>
+            <Border BorderBrush="Green"
+                    BorderThickness="2"
+                    CornerRadius="10"
+                    Margin="10"
+                    Height="400"
+                    Width="400">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Row="0"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Content="Просмотреть информацию об алгоритме Fasttext"
+                            Style="{StaticResource OutlinedGrayButtonStyle}"
+                            Command="{Binding ShowInformationCommand}"
+                            CommandParameter="{Binding FasttextInformationVm}" />
+
+
+                    <Image Grid.Row="1"
+                           Grid.Column="0"
+                           Margin="10"
+                           Source="/Images/fasttextIco.png" />
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Margin="10"
+                               FontSize="15"
+                               TextWrapping="Wrap"
+                               FontFamily="Consolas"
+                               VerticalAlignment="Center"
+                               Text="На этой вкладке вы сможете ознакомиться с информаций о работе алгоритма Fasttext" />
+                </Grid>
+            </Border>
+
+            <Border BorderBrush="Red"
+                    BorderThickness="2"
+                    CornerRadius="10"
+                    Margin="10"
+                    Height="400"
+                    Width="400">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Row="0"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Content="Просмотреть информацию об алгоритме Word2Vec"
+                            Style="{StaticResource OutlinedGrayButtonStyle}"
+                            Command="{Binding ShowInformationCommand}"
+                            CommandParameter="{Binding WordTwoVecInformationVm}" />
+                    
+                    <Image Grid.Row="1"
+                           Grid.Column="0"
+                           Margin="10"
+                           Source="/Images/wordTwoVecIco.png" />
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Margin="10"
+                               FontSize="15"
+                               TextWrapping="Wrap"
+                               FontFamily="Consolas"
+                               VerticalAlignment="Center"
+                               Text="На этой вкладке вы сможете ознакомиться с информаций о работе алгоритма Word2Vec" />
+                </Grid>
+            </Border>
+
+            <Border BorderBrush="Purple"
+                    BorderThickness="2"
+                    CornerRadius="10"
+                    Margin="10"
+                    Height="400"
+                    Width="400">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Row="0"
+                            Grid.Column="0"
+                            Grid.ColumnSpan="2"
+                            Content="Просмотреть информацию об алгоритме Tf-Idf"
+                            Style="{StaticResource OutlinedGrayButtonStyle}"
+                            Command="{Binding ShowInformationCommand}"
+                            CommandParameter="{Binding TfIdfInformationVm}" />
+
+                    <Image Grid.Row="1"
+                           Grid.Column="0"
+                           Margin="10"
+                           Source="/Images/tfIdfIco.png" />
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="1"
+                               Margin="10"
+                               FontSize="15"
+                               TextWrapping="Wrap"
+                               FontFamily="Consolas"
+                               VerticalAlignment="Center"
+                               Text="На этой вкладке вы сможете ознакомиться с информаций о работе алгоритма Tf-Idf" />
+                </Grid>
+            </Border>
+        </WrapPanel>
+    </Grid>
+</UserControl>

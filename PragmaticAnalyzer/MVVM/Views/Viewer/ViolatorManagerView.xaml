@@ -1,0 +1,132 @@
+﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.ViolatorManagerView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Viewer"
+        xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+        xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+        xmlns:vmViewer="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Viewer"
+        d:DataContext="{d:DesignInstance Type=vmViewer:ViolatorViewModel}"
+        mc:Ignorable="d"
+        Height="600"
+        Width="500"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <assist:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    Margin="10"
+                    HorizontalAlignment="Center">
+            <TextBlock Text="Идентификатор:"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource MainTextBlockStyle}"
+                       Margin="0 0 5 0" />
+
+            <TextBlock Style="{StaticResource MainTextBlockStyle}"
+                       Text="{Binding ManagerViolator.SequenceNumber}"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <TextBlock Grid.Row="1"
+                   Text="Цель атаки "
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource MainTextBlockStyle}" />
+
+        <TextBox Grid.Row="2"
+                 Style="{StaticResource RoundedTextBoxStyle}"
+                 Text="{Binding ManagerViolator.Target, Mode=TwoWay}" />
+
+        <TextBlock Grid.Row="3"
+                   Text="Используемые инструменты"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource MainTextBlockStyle}" />
+
+        <TextBox Grid.Row="4"
+                 Style="{StaticResource RoundedTextBoxStyle}"
+                 Text="{Binding ManagerViolator.UsingTools, Mode=TwoWay}" />
+
+        <TextBlock Grid.Row="5"
+                   Text="Данные о предыдущих атаках "
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"
+                   Style="{StaticResource MainTextBlockStyle}" />
+
+        <TextBox Grid.Row="6"
+                 Style="{StaticResource RoundedTextBoxStyle}"
+                 Text="{Binding ManagerViolator.PreviousAttacks, Mode=TwoWay}" />
+
+        <StackPanel Grid.Row="7"
+                    Orientation="Vertical"
+                    Margin="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Потенциал:"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"
+                           Style="{StaticResource MainTextBlockStyle}"
+                           Margin="0 0 10 0" />
+
+                <ComboBox Width="350"
+                          ItemsSource="{Binding ViolatorPotentials}"
+                          SelectedItem="{Binding ManagerViolator.Potential, Mode=TwoWay}"
+                          Style="{StaticResource RoundedComboBoxStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0 10 0 0">
+                <TextBlock Text="Источник угрозы:"
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"
+                           Style="{StaticResource MainTextBlockStyle}"
+                           Margin="0 0 10 0" />
+
+                <ComboBox Width="305"
+                          ItemsSource="{Binding ViolatorSources}"
+                          SelectedItem="{Binding ManagerViolator.Source, Mode=TwoWay}"
+                          Style="{StaticResource RoundedComboBoxStyle}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Converter={StaticResource EnumDescriptionConverter}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="8"
+                    Orientation="Vertical">
+            <Button Content="Готово"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding DoneManagerCommand}" />
+
+            <Button Content="Отмена"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding CancelManagerCommand}" />
+        </StackPanel>
+    </Grid>
+</Window>

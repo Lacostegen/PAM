@@ -1,0 +1,93 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.VulnerabilitieFstecView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Viewer"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Viewer"
+             d:DataContext="{d:DesignInstance vm:VulnerabilitieFstecViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer>
+        <WrapPanel Visibility="{Binding SelectedVulnerabilitie, Converter={StaticResource NullToVisibilityConverter}}">
+            <cc:LabeledValueBox LabelText="Идентификатор"
+                                ValueText="{Binding SelectedVulnerabilitie.Identifier}" />
+
+            <cc:LabeledValueBox LabelText="Наименование уязвимости"
+                                ValueText="{Binding SelectedVulnerabilitie.Name}" />
+
+            <cc:LabeledValueBox LabelText="Описание уязвимости"
+                                ValueText="{Binding SelectedVulnerabilitie.Description}" />
+
+            <cc:LabeledValueBox LabelText="Вендор ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.Vendor}" />
+
+            <cc:LabeledValueBox LabelText="Название ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.NameSoftware}" />
+
+            <cc:LabeledValueBox LabelText="Версия ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.Version}" />
+
+            <cc:LabeledValueBox LabelText="Тип ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.Type}" />
+
+            <cc:LabeledValueBox LabelText="Наименование ОС и тип аппаратной платформы"
+                                ValueText="{Binding SelectedVulnerabilitie.NameOperatingSystem}" />
+
+            <cc:LabeledValueBox LabelText="Класс уязвимости"
+                                ValueText="{Binding SelectedVulnerabilitie.Class}" />
+
+            <cc:LabeledValueBox LabelText="Дата выявления"
+                                ValueText="{Binding SelectedVulnerabilitie.Date}" />
+
+            <cc:LabeledValueBox LabelText="CVSS 2.0"
+                                ValueText="{Binding SelectedVulnerabilitie.CvssTwo}" />
+
+            <cc:LabeledValueBox LabelText="CVSS 3.0"
+                                ValueText="{Binding SelectedVulnerabilitie.CvssThree}" />
+
+            <cc:LabeledValueBox LabelText="Уровень опасности уязвимости"
+                                ValueText="{Binding SelectedVulnerabilitie.DangerLevel}" />
+
+            <cc:LabeledValueBox LabelText="Возможные меры по устранению"
+                                ValueText="{Binding SelectedVulnerabilitie.Measure}" />
+
+            <cc:LabeledValueBox LabelText="Наличие эксплойта"
+                                ValueText="{Binding SelectedVulnerabilitie.Exploit}" />
+
+            <cc:LabeledValueBox LabelText="Информация об устранении"
+                                ValueText="{Binding SelectedVulnerabilitie.Information}" />
+
+            <cc:LabeledValueBox LabelText="Ссылки на источники"
+                                ValueText="{Binding SelectedVulnerabilitie.Links}" />
+
+            <cc:LabeledValueBox LabelText="Идентификаторы других систем описаний уязвимости"
+                                ValueText="{Binding SelectedVulnerabilitie.OtherIdentifier}" />
+
+            <cc:LabeledValueBox LabelText="Прочая информация"
+                                ValueText="{Binding SelectedVulnerabilitie.OtherInformation}" />
+
+            <cc:LabeledValueBox LabelText="Связь с инцидентами ИБ"
+                                ValueText="{Binding SelectedVulnerabilitie.Incident}" />
+
+            <cc:LabeledValueBox LabelText="Способ эксплуатации"
+                                ValueText="{Binding SelectedVulnerabilitie.OperatingMethod}" />
+
+            <cc:LabeledValueBox LabelText="Способ устранения"
+                                ValueText="{Binding SelectedVulnerabilitie.EliminationMethod}" />
+
+            <cc:LabeledValueBox LabelText="Описание ошибки CWE"
+                                ValueText="{Binding SelectedVulnerabilitie.DescriptionCwe}" />
+
+            <cc:LabeledValueBox LabelText="Тип ошибки CWE"
+                                ValueText="{Binding SelectedVulnerabilitie.Cwe}" />
+        </WrapPanel>
+    </ScrollViewer>
+</UserControl>

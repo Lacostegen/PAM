@@ -1,0 +1,54 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.VulnerabilitieJvnView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views.Viewer"
+             mc:Ignorable="d"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Viewer"
+             d:DataContext="{d:DesignInstance vm:VulnerabilitieJvnViewModel}"
+             d:DesignHeight="450"
+             d:DesignWidth="800">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <ScrollViewer>
+        <WrapPanel Visibility="{Binding SelectedVulnerabilitie, Converter={StaticResource NullToVisibilityConverter}}">
+            <cc:LabeledValueBox LabelText="Идентификатор"
+                                ValueText="{Binding SelectedVulnerabilitie.Identifier}" />
+
+            <cc:LabeledValueBox LabelText="Название"
+                                ValueText="{Binding SelectedVulnerabilitie.Name}" />
+
+            <cc:LabeledValueBox LabelText="Описание уязвимости"
+                                ValueText="{Binding SelectedVulnerabilitie.Description}" />
+
+            <cc:LabeledValueBox LabelText="Ссылка на уязвимость"
+                                ValueText="{Binding SelectedVulnerabilitie.Link}" />
+
+            <cc:LabeledValueBox LabelText="Дата изменения"
+                                ValueText="{Binding SelectedVulnerabilitie.DateChange}" />
+
+            <cc:LabeledValueBox LabelText="Дата добавления"
+                                ValueText="{Binding SelectedVulnerabilitie.DateAdded}" />
+
+            <cc:LabeledValueBox LabelText="Полезные ссылки"
+                                ValueText="{Binding SelectedVulnerabilitie.ReferencesToString}" />
+
+            <cc:LabeledValueBox LabelText="CVSS"
+                                ValueText="{Binding SelectedVulnerabilitie.Cvss}" />
+
+            <cc:LabeledValueBox LabelText="Вендор ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.VendorToString}" />
+
+            <cc:LabeledValueBox LabelText="Нзвание ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.NameSoftwareToString}" />
+
+            <cc:LabeledValueBox LabelText="Версия ПО"
+                                ValueText="{Binding SelectedVulnerabilitie.VersionSoftwareToString}" />
+        </WrapPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,118 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.ThreatView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vmViewer="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Viewer"
+             d:DataContext="{d:DesignInstance Type=vmViewer:ThreatViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+             d:DesignWidth="1000">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="0.2*" />
+        </Grid.ColumnDefinitions>
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="0.1*" />
+            <RowDefinition Height="0.1*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Grid.Column="0"
+                   Text="Идентификатор угрозы:"
+                   Style="{StaticResource MainTextBlockStyle}" />
+
+        <TextBlock Grid.Row="0"
+                   Grid.Column="2"
+                   Text="Ход выполнения:"
+                   Style="{StaticResource MainTextBlockStyle}" />
+
+        <ListBox  Grid.Row="1"
+                  Grid.Column="0"
+                  ItemsSource="{Binding Threats, Mode=OneWay}"
+                  Style="{StaticResource RoundedListBoxStyle}"
+                  ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}"
+                  SelectedItem="{Binding SelectedThreat}"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Id}"
+                               Style="{StaticResource MainTextBlockStyle}"
+                               Margin="1" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Grid.Row="1"
+                Grid.Column="1"
+                Grid.RowSpan="3"
+                Margin="5"
+                BorderBrush="Black"
+                BorderThickness="1"
+                CornerRadius="6">
+            <WrapPanel Visibility="{Binding SelectedThreat, Converter={StaticResource NullToVisibilityConverter}}">
+                <cc:LabeledValueBox LabelText="Наименование УБИ"
+                                    ValueText="{Binding SelectedThreat.Name}" />
+
+                <cc:LabeledValueBox LabelText="Описание"
+                                    ValueText="{Binding SelectedThreat.Description}" />
+
+                <cc:LabeledValueBox LabelText="Источник угрозы (характеристика и потенциал нарушителя)"
+                                    ValueText="{Binding SelectedThreat.Source}" />
+
+                <cc:LabeledValueBox LabelText="Объект воздействия"
+                                    ValueText="{Binding SelectedThreat.ObjectInfluence}" />
+
+                <cc:LabeledValueBox LabelText="Нарушение конфиденциальности"
+                                    ValueText="{Binding SelectedThreat.PrivacyViolation}" />
+
+                <cc:LabeledValueBox LabelText="Нарушение целостности"
+                                    ValueText="{Binding SelectedThreat.IntegrityViolation}" />
+
+                <cc:LabeledValueBox LabelText="Нарушение доступности"
+                                    ValueText="{Binding SelectedThreat.AccessibilityViolation}" />
+
+                <cc:LabeledValueBox LabelText="Дата включения угрозы в БнД УБИ"
+                                    ValueText="{Binding SelectedThreat.DateInclusion}" />
+
+                <cc:LabeledValueBox LabelText="Дата последнего изменения данных"
+                                    ValueText="{Binding SelectedThreat.DateChange}" />
+            </WrapPanel>
+        </Border>
+
+        <cc:FramedTextBlock Grid.Row="1"
+                            Grid.Column="2"
+                            Grid.RowSpan="2"
+                            Text="{Binding Status}" />
+
+        <ProgressBar Grid.Row="2"
+                     Grid.Column="0"
+                     Style="{StaticResource RoundedProgressBarStyle}"
+                     IsIndeterminate="{Binding Progress}"/>
+
+        <Button Grid.Row="3"
+                Grid.Column="0"
+                Content="Обновить"
+                Style="{StaticResource OutlinedGrayButtonStyle}"    
+                Command="{Binding UpdateCommand}" />
+
+        <Button Grid.Row="3"
+                Grid.Column="2"
+                Content="Остановить"
+                Style="{StaticResource OutlinedGrayButtonStyle}" 
+                Command="{Binding CancelUpdateCommand}" />
+    </Grid>
+</UserControl>

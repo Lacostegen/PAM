@@ -1,0 +1,115 @@
+﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.SetView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:PragmaticAnalyzer.MVVM.Views"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             d:DataContext="{d:DesignInstance vm:SetViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <cc:ExtendedDownloadTab  Grid.Row="0"
+                                 Title="Уязвимостей"
+                                 RefreshCommandParameter="ProtectionMeasure"
+                                 Time="{Binding LastUpdateConfig.Vulnerabilitie}"
+                                 Text="{Binding DisplayedPaths.VulnerabilitiePath}"
+                                 RefreshUpdateCommand="{Binding UpdateVulDbCommand}"
+                                 RefreshLoadCommand="{Binding SetCommand}"
+                                 ButtonBackground="{Binding VulnerabilitieButtonBackground}" />
+
+        <cc:ExtendedDownloadTab  Grid.Row="1"
+                                 Title="Угроз"
+                                 RefreshCommandParameter="ProtectionMeasure"
+                                 Time="{Binding LastUpdateConfig.Threat}"
+                                 Text="{Binding DisplayedPaths.ThreatPath}"
+                                 RefreshUpdateCommand="{Binding UpdateThreatDbCommand}"
+                                 RefreshLoadCommand="{Binding SetCommand}"
+                                 ButtonBackground="{Binding ThreatButtonBackground}" />
+
+        <cc:ExtendedDownloadTab  Grid.Row="2"
+                                 Title="Эксплойтов"
+                                 RefreshCommandParameter="ProtectionMeasure"
+                                 Time="{Binding LastUpdateConfig.Exploit}"
+                                 Text="{Binding DisplayedPaths.ExploitPath}"
+                                 RefreshUpdateCommand="{Binding UpdateExploitDbCommand}"
+                                 RefreshLoadCommand="{Binding SetCommand}"
+                                 ButtonBackground="{Binding ExploitButtonBackground}" />
+
+        <cc:DownloadTab Grid.Row="3"
+                        Title="Мер защиты"
+                        RefreshCommandParameter="ProtectionMeasure"
+                        Time="{Binding LastUpdateConfig.ProtectionMeasure}"
+                        Text="{Binding DisplayedPaths.ProtectionMeasurePath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding ProtectionMeasureButtonBackground}" />
+
+        <cc:DownloadTab Grid.Row="4"
+                        Title="Рисков"
+                        RefreshCommandParameter="Outcomes"
+                        Time="{Binding LastUpdateConfig.Outcomes}"
+                        Text="{Binding DisplayedPaths.OutcomesPath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding OutcomesButtonBackground}" />
+
+        <cc:DownloadTab Grid.Column="1"
+                        Grid.Row="0"
+                        Title="Техник и тактик"
+                        RefreshCommandParameter="Tactic"
+                        Time="{Binding LastUpdateConfig.Tactic}"
+                        Text="{Binding DisplayedPaths.TacticPath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding TacticButtonBackground}" />
+
+        <cc:DownloadTab Grid.Column="1"
+                        Grid.Row="1"
+                        Title="Нарушителей"
+                        RefreshCommandParameter="Violator"
+                        Time="{Binding LastUpdateConfig.Violator}"
+                        Text="{Binding DisplayedPaths.ViolatorPath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding ViolatorButtonBackground}" />
+
+        <cc:DownloadTab Grid.Column="1"
+                        Grid.Row="2"
+                        Title="Спициалиста по ЗИ"
+                        RefreshCommandParameter="Specialist"
+                        Time="{Binding LastUpdateConfig.Specialist}"
+                        Text="{Binding DisplayedPaths.SpecialistPath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding SpecialistButtonBackground}" />
+
+        <cc:DownloadTab Grid.Column="1"
+                        Grid.Row="3"
+                        Title="Текущих состояний ПФ СОПКА"
+                        RefreshCommandParameter="CurrentStatus"
+                        Time="{Binding LastUpdateConfig.CurStatus}"
+                        Text="{Binding DisplayedPaths.CurStatusPath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding CurrentStatusButtonBackground}" />
+
+        <cc:DownloadTab Grid.Column="1"
+                        Grid.Row="4"
+                        Title="Эталонных состояний ПФ СОПКА"
+                        RefreshCommandParameter="ReferenceStatus"
+                        Time="{Binding LastUpdateConfig.RefStatus}"
+                        Text="{Binding DisplayedPaths.RefStatusPath}"
+                        RefreshCommand="{Binding SetCommand}"
+                        ButtonBackground="{Binding ReferenceStatusButtonBackground}" />
+    </Grid>
+</UserControl>
