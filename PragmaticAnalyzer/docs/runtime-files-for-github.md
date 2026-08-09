@@ -28,12 +28,18 @@ PragmaticAnalyzer/PragmaticAnalyzerChatOnly/Translator/
 
 - `matcher.exe` - исполняемый файл для вспомогательных операций проекта.
 - `NativeLlama/` - `llama-server.exe` и DLL для запуска локальной GGUF-модели.
-- `Models/` - папка для Word2Vec/FastText `.bin`-моделей, если они используются.
+- `Models/` - Word2Vec/FastText `.bin`-модели.
+- `Config/` - рабочие настройки моделей и RAG.
+- `Database/` - локальные базы данных приложения.
+- `KnowledgeBase/` - локальная база знаний и индекс RAG.
+- `ExploitText/` - рабочая папка под тексты эксплойтов.
 - `Translator/` - папка для GGUF-модели. Сама `.gguf`-модель в комплект не включается.
 
 ## Что нужно добавить вручную
 
 GGUF-модель не входит в комплект. Ее нужно передать отдельно и положить в `Translator/`.
+
+Старый `koboldcpp.exe` в комплект не входит, потому что программа переведена на запуск одной GGUF-модели через `NativeLlama/llama-server.exe`.
 
 Пример:
 
