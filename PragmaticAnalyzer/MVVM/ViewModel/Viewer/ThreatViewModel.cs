@@ -4,7 +4,9 @@ using PragmaticAnalyzer.Core;
 using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
 using PragmaticAnalyzer.MVVM.Model;
+using PragmaticAnalyzer.MVVM.ViewModel.Main;
 using PragmaticAnalyzer.Services;
+using System.Collections.Specialized;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 
@@ -18,19 +20,47 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         private readonly IFileService _fileService;
         private readonly Func<string, DataType, Task> LastUpdateConfig;
         public ObservableCollection<Threat> Threats { get; }
+        public LocalDatabaseSearchViewModel LocalSearch { get; }
         public Threat? SelectedThreat { get => Get<Threat?>(); set => Set(value); }
         public string? Status { get => Get<string>(); set => Set(value); }
         public bool Progress { get => Get<bool>(); set => Set(value); }
 
-        public ThreatViewModel(ObservableCollection<Threat> threats, Func<string, DataType, Task> lastUpdateConfig, ThreatConfig threatConfig)
+        public ThreatViewModel(
+            ObservableCollection<Threat> threats,
+            Func<string, DataType, Task> lastUpdateConfig,
+            ThreatConfig threatConfig,
+            Action<object> setCurrentView)
         {
             Threats = threats;
             LastUpdateConfig = lastUpdateConfig;
             _threatConfig = threatConfig;
+            LocalSearch = new(
+                "Поиск только по БД угроз",
+                () => [new DatabaseSearchSource("БД угроз", Threats)],
+                this,
+                setCurrentView);
             Progress = false;
             _fileService = new FileService();
             _model = new();
             _model.NotifyRequested += (msg) => Status += "\n" + msg;
+            Threats.CollectionChanged += Threats_CollectionChanged;
+            EnsureSelection();
+        }
+
+        public void EnsureSelection()
+        {
+            if (SelectedThreat is null && Threats.Count > 0)
+            {
+                SelectedThreat = Threats[0];
+            }
+        }
+
+        private void Threats_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (SelectedThreat is null || !Threats.Contains(SelectedThreat))
+            {
+                EnsureSelection();
+            }
         }
 
         public RelayCommand UpdateCommand => GetCommand(async o =>
@@ -56,6 +86,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
                 {
                     Threats.Add(threat);
                 }
+                EnsureSelection();
                 await _fileService.SaveDTOAsync(Threats, DataType.Threat, GlobalConfig.ThreatPath);
                 LastUpdateConfig?.Invoke(DateTime.Now.ToString("f"), DataType.Threat);
             }

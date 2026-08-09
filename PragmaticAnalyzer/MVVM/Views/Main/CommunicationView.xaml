@@ -8,7 +8,82 @@
              d:DesignHeight="450"
              d:DesignWidth="800">
 
-    
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <Style x:Key="OutlinedGrayToggleButtonStyle"
+               TargetType="ToggleButton">
+            <Setter Property="Foreground"
+                    Value="#212121" />
+            <Setter Property="Background"
+                    Value="White" />
+            <Setter Property="Margin"
+                    Value="5" />
+            <Setter Property="Cursor"
+                    Value="Hand" />
+            <Setter Property="BorderBrush"
+                    Value="Black" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Setter Property="Padding"
+                    Value="12,6" />
+            <Setter Property="FontSize"
+                    Value="14" />
+            <Setter Property="FontWeight"
+                    Value="SemiBold" />
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center" />
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                              RecognizesAccessKey="True" />
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver"
+                                     Value="True">
+                                <Setter TargetName="border"
+                                        Property="Background"
+                                        Value="#E0E0E0" />
+                            </Trigger>
+                            <Trigger Property="IsPressed"
+                                     Value="True">
+                                <Setter TargetName="border"
+                                        Property="Background"
+                                        Value="#D0D0D0" />
+                            </Trigger>
+                            <Trigger Property="IsChecked"
+                                     Value="True">
+                                <Setter TargetName="border"
+                                        Property="Background"
+                                        Value="#D8D8D8" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled"
+                                     Value="False">
+                                <Setter Property="Foreground"
+                                        Value="#9E9E9E" />
+                                <Setter TargetName="border"
+                                        Property="Background"
+                                        Value="#F0F0F0" />
+                                <Setter TargetName="border"
+                                        Property="BorderBrush"
+                                        Value="#CCCCCC" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -62,19 +137,89 @@
                                 Style="{StaticResource OutlinedGrayButtonStyle}"
                                 Margin="3,0"
                                 Command="{Binding CheckServerCommand}" />
+
+                        <Button Content="Тест скорости"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding RunBenchmarkCommand}" />
                     </StackPanel>
 
-                    <TextBlock Text="{Binding ServerStatusText}"
-                               VerticalAlignment="Center"
-                               FontWeight="Bold"
-                               Margin="0,0,10,0" />
+                    <StackPanel VerticalAlignment="Center"
+                                Margin="0,0,10,0">
+
+                        <TextBlock Text="{Binding ServerStatusText}"
+                            FontWeight="Bold" />
+
+                        <TextBlock Text="{Binding RagStatusText}"
+                            FontSize="12"
+                            Foreground="#555"
+                            Margin="0,3,0,0" />
+
+                        <TextBlock Text="{Binding GenerationStatusText}"
+                                   FontSize="12"
+                                   Foreground="#666"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap"
+                                   Visibility="{Binding IsSending, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                        <TextBlock Text="{Binding GenerationDiagnosticsText}"
+                                   FontSize="12"
+                                   Foreground="#444"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Text="{Binding BenchmarkStatusText}"
+                                   FontSize="12"
+                                   Foreground="#444"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Text="{Binding LastRequestSummaryText}"
+                                   FontSize="12"
+                                   Foreground="#444"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Text="{Binding LastRagSourcesText}"
+                                   FontSize="12"
+                                   Foreground="#555"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap" />
+
+                        <TextBlock Text="{Binding HardwareProfileText}"
+                                   FontSize="12"
+                                   Foreground="#555"
+                                   Margin="0,3,0,0"
+                                   TextWrapping="Wrap" />
+
+                        <StackPanel Orientation="Horizontal"
+                                    Margin="0,6,0,0"
+                                    Visibility="{Binding IsModelLoading, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ProgressBar Width="140"
+                                         Height="6"
+                                         IsIndeterminate="True"
+                                         VerticalAlignment="Center" />
+
+                            <TextBlock Text="{Binding ServerStatusText}"
+                                       FontSize="12"
+                                       Foreground="#666"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </StackPanel>
                 </DockPanel>
 
                 <!-- Нижняя строка: настройки модели -->
-                <Grid Grid.Row="1"
-                      Margin="0,10,0,0">
-                    <Grid.Style>
-                        <Style TargetType="Grid">
+                <ScrollViewer x:Name="ModelSettingsScrollViewer"
+                              Grid.Row="1"
+                              Margin="0,10,0,0"
+                              MaxHeight="430"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              PanningMode="VerticalOnly"
+                              PreviewMouseWheel="ModelSettingsScrollViewer_PreviewMouseWheel">
+                    <ScrollViewer.Style>
+                        <Style TargetType="ScrollViewer">
                             <Setter Property="Visibility" Value="Collapsed" />
 
                             <Style.Triggers>
@@ -84,7 +229,9 @@
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Grid.Style>
+                    </ScrollViewer.Style>
+
+                    <Grid>
 
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="130" />
@@ -103,25 +250,37 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0"
                                Grid.Column="0"
-                               Text="koboldcpp.exe:"
+                               Text="llama-server:"
                                VerticalAlignment="Center"
                                Margin="0,3" />
 
                     <TextBox Grid.Row="0"
                              Grid.Column="1"
-                             Text="{Binding KoboldCppPath, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding LlamaServerPath}"
+                             IsReadOnly="True"
                              Style="{StaticResource RoundedTextBoxStyle}"
                              Margin="3" />
 
                     <Button Grid.Row="0"
                             Grid.Column="2"
-                            Content="Выбрать"
-                            Style="{StaticResource OutlinedGrayButtonStyle}"
-                            Command="{Binding SelectKoboldCppPathCommand}" />
+                            Content="Авто"
+                            IsEnabled="False"
+                            Style="{StaticResource OutlinedGrayButtonStyle}" />
 
                     <TextBlock Grid.Row="1"
                                Grid.Column="0"
@@ -143,94 +302,361 @@
 
                     <TextBlock Grid.Row="2"
                                Grid.Column="0"
-                               Text="Порт:"
+                               Text="Endpoint:"
                                VerticalAlignment="Center"
                                Margin="0,3" />
 
                     <TextBox Grid.Row="2"
                              Grid.Column="1"
-                             Text="{Binding TranslatorPort, UpdateSourceTrigger=PropertyChanged}"
+                             Text="{Binding ModelEndpointText}"
+                             IsReadOnly="True"
                              Style="{StaticResource RoundedTextBoxStyle}"
                              Margin="3" />
+
+                    <ToggleButton x:Name="AdvancedSettingsToggleButton"
+                                  Grid.Row="2"
+                                  Grid.Column="2"
+                                  Content="Продвинутые"
+                                  Style="{StaticResource OutlinedGrayToggleButtonStyle}"
+                                  Margin="3" />
 
                     <TextBlock Grid.Row="3"
            Grid.Column="0"
            Text="Контекст:"
            VerticalAlignment="Center"
-           Margin="0,3" />
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="3"
          Grid.Column="1"
          Text="{Binding ContextSize, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBlock Grid.Row="4"
            Grid.Column="0"
            Text="Max tokens:"
            VerticalAlignment="Center"
-           Margin="0,3" />
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="4"
          Grid.Column="1"
          Text="{Binding MaxTokens, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBlock Grid.Row="5"
            Grid.Column="0"
            Text="Temperature:"
            VerticalAlignment="Center"
-           Margin="0,3" />
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="5"
          Grid.Column="1"
          Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBlock Grid.Row="6"
            Grid.Column="0"
            Text="Top P:"
            VerticalAlignment="Center"
-           Margin="0,3" />
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="6"
          Grid.Column="1"
          Text="{Binding TopP, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBlock Grid.Row="7"
            Grid.Column="0"
            Text="Repeat penalty:"
            VerticalAlignment="Center"
-           Margin="0,3" />
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="7"
          Grid.Column="1"
          Text="{Binding RepeatPenalty, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <TextBlock Grid.Row="8"
            Grid.Column="0"
-           Text="История:"
+           Text="GPU layers:"
            VerticalAlignment="Center"
-           Margin="0,3" />
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="8"
          Grid.Column="1"
-         Text="{Binding HistoryMessagesCount, UpdateSourceTrigger=PropertyChanged}"
+         Text="{Binding GpuLayerCount, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBlock Grid.Row="9"
            Grid.Column="0"
-           Text="System prompt:"
-           VerticalAlignment="Top"
-           Margin="0,8,0,3" />
+           Text="Потоки CPU:"
+           VerticalAlignment="Center"
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <TextBox Grid.Row="9"
+         Grid.Column="1"
+         Text="{Binding ThreadCount, UpdateSourceTrigger=PropertyChanged}"
+         Style="{StaticResource RoundedTextBoxStyle}"
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Grid.Row="10"
+           Grid.Column="0"
+           Text="Batch:"
+           VerticalAlignment="Center"
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <StackPanel Grid.Row="10"
+                                Grid.Column="1"
+                                Orientation="Horizontal"
+                                Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBox Text="{Binding BatchSize, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="110"
+                                 Style="{StaticResource RoundedTextBoxStyle}"
+                                 Margin="3" />
+                        <TextBlock Text="Micro batch:"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,4,0" />
+                        <TextBox Text="{Binding MicroBatchSize, UpdateSourceTrigger=PropertyChanged}"
+                                 Width="110"
+                                 Style="{StaticResource RoundedTextBoxStyle}"
+                                 Margin="3" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="11"
+                               Grid.Column="0"
+                               Text="Профиль:"
+                               VerticalAlignment="Center"
+                               Margin="0,3" />
+
+                    <ComboBox Grid.Row="11"
+                              Grid.Column="1"
+                              ItemsSource="{Binding PerformanceProfiles}"
+                              SelectedItem="{Binding PerformanceProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="3"
+                              MinHeight="30" />
+
+                    <StackPanel Grid.Row="11"
+                                Grid.Column="2"
+                                Orientation="Horizontal">
+                        <Button Content="Рекомендуемые"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding ApplyRecommendedSettingsCommand}" />
+                        <Button Content="Под железо"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding ApplyHardwareAutoSettingsCommand}" />
+                        <Button Content="Сохранить"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding SaveTranslatorConfigCommand}" />
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="12"
+                               Grid.Column="0"
+                               Text="Режим:"
+                               VerticalAlignment="Center"
+                               Margin="0,3" />
+
+                    <ComboBox Grid.Row="12"
+                              Grid.Column="1"
+                              ItemsSource="{Binding ChatModes}"
+                              SelectedItem="{Binding ChatMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="3"
+                              MinHeight="30" />
+
+                    <CheckBox Grid.Row="12"
+                              Grid.Column="2"
+                              Content="Compact prompt"
+                              IsChecked="{Binding UseCompactSystemPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              VerticalAlignment="Center"
+                              Margin="8,0,0,0" />
+
+                    <TextBlock Grid.Row="13"
+           Grid.Column="0"
+           Text="Режим ответа:"
+           VerticalAlignment="Center"
+           Margin="0,3" />
+
+                    <ComboBox Grid.Row="13"
+                              Grid.Column="1"
+                              ItemsSource="{Binding ResponseModes}"
+                              SelectedItem="{Binding ResponseMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="3"
+                              MinHeight="30" />
+
+                    <TextBlock Grid.Row="14"
+                               Grid.Column="0"
+                               Text="RAG:"
+                               VerticalAlignment="Center"
+                               Margin="0,3" />
+
+                    <ComboBox Grid.Row="14"
+                              Grid.Column="1"
+                              ItemsSource="{Binding RagModes}"
+                              SelectedItem="{Binding RagMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="3"
+                              MinHeight="30" />
+
+                    <TextBlock Grid.Row="15"
+                               Grid.Column="0"
+                               Text="Модель арены:"
+                               VerticalAlignment="Center"
+                               Margin="0,3"
+                               Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Grid Grid.Row="15"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="2"
+                          Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ArenaModelPath, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource RoundedTextBoxStyle}"
+                                 Margin="3" />
+
+                        <Button Grid.Column="1"
+                                Content="Выбрать"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding SelectArenaModelPathCommand}" />
+
+                        <Button Grid.Column="2"
+                                Content="Добавить"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding AddArenaModelCommand}" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="16"
+                               Grid.Column="0"
+                               Text="Участники:"
+                               VerticalAlignment="Top"
+                               Margin="0,8,0,3"
+                               Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <ListBox Grid.Row="16"
+                             Grid.Column="1"
+                             ItemsSource="{Binding ArenaModels}"
+                             SelectedItem="{Binding SelectedArenaModel, Mode=TwoWay}"
+                             MinHeight="70"
+                             MaxHeight="100"
+                             Margin="3"
+                             Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,6,0" />
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding DisplayName}"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               Margin="0,0,8,0" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Path}"
+                                               Foreground="#666"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button Grid.Row="16"
+                            Grid.Column="2"
+                            Content="Удалить"
+                            Style="{StaticResource OutlinedGrayButtonStyle}"
+                            Margin="3"
+                            VerticalAlignment="Top"
+                            Command="{Binding RemoveSelectedArenaModelCommand}"
+                            Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Grid.Row="17"
+                               Grid.Column="0"
+                               Text="Модель-судья:"
+                               VerticalAlignment="Center"
+                               Margin="0,3"
+                               Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Grid Grid.Row="17"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="2"
+                          Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ArenaJudgeModelPath, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource RoundedTextBoxStyle}"
+                                 Margin="3" />
+
+                        <Button Grid.Column="1"
+                                Content="Выбрать"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding SelectArenaJudgeModelPathCommand}" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="18"
+           Grid.Column="0"
+           Text="История:"
+           VerticalAlignment="Center"
+           Margin="0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBox Grid.Row="18"
+         Grid.Column="1"
+         Text="{Binding HistoryMessagesCount, UpdateSourceTrigger=PropertyChanged}"
+         Style="{StaticResource RoundedTextBoxStyle}"
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Grid.Row="19"
+           Grid.Column="0"
+           Text="System prompt:"
+           VerticalAlignment="Top"
+           Margin="0,8,0,3"
+           Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBox Grid.Row="19"
          Grid.Column="1"
          Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
@@ -238,14 +664,23 @@
          AcceptsReturn="True"
          TextWrapping="Wrap"
          VerticalScrollBarVisibility="Auto"
-         Margin="3" />
+         Margin="3"
+         Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                    <Button Grid.Row="9"
-        Grid.Column="2"
-        Content="Сохранить настройки"
-        Style="{StaticResource OutlinedGrayButtonStyle}"
-        Command="{Binding SaveTranslatorConfigCommand}" />
+                    <TextBlock Grid.Row="20"
+                               Grid.Column="0"
+                               Text="Лог:"
+                               VerticalAlignment="Center"
+                               Margin="0,3" />
+
+                    <TextBox Grid.Row="20"
+                             Grid.Column="1"
+                             Text="{Binding ModelLogPath}"
+                             IsReadOnly="True"
+                             Style="{StaticResource RoundedTextBoxStyle}"
+                             Margin="3" />
                 </Grid>
+                </ScrollViewer>
             </Grid>
         </Border>
 
@@ -326,7 +761,7 @@
         <!-- Индикатор отправки сообщения -->
         <ProgressBar Grid.Row="1"
                      IsIndeterminate="{Binding IsSending}"
-                     Visibility="Visible"
+                     Visibility="{Binding IsSending, Converter={StaticResource BoolToVisibilityConverter}}"
                      VerticalAlignment="Top"
                      Height="4"
                      Margin="5" />
@@ -342,12 +777,13 @@
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />
+                <RowDefinition />
             </Grid.RowDefinitions>
 
             <TextBox x:Name="InputBox"
                      Grid.Column="0"
                      Grid.Row="0"
-                     Grid.RowSpan="2"
+                     Grid.RowSpan="3"
                      Height="90"
                      AcceptsReturn="False"
                      VerticalContentAlignment="Center"
@@ -363,6 +799,13 @@
 
             <Button Grid.Column="1"
                     Grid.Row="1"
+                    Content="Прервать"
+                    Command="{Binding CancelGenerationCommand}"
+                    IsEnabled="{Binding CanCancelGeneration}"
+                    Style="{StaticResource OutlinedGrayButtonStyle}" />
+
+            <Button Grid.Column="1"
+                    Grid.Row="2"
                     Content="Очистить"
                     Command="{Binding ClearCommand}"
                     Style="{StaticResource OutlinedGrayButtonStyle}" />

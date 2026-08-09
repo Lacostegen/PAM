@@ -196,7 +196,7 @@ IDF=log(10000/500)=log(20)≈3.0 (при использовании натура
                                    FontFamily="Franklin Gothic"
                                    Margin="5" />
 
-                        <Button Content="1. TF-IDF — Википедия [Электронный ресурс] // Wikipedia [Офиц. сайт]. Режим доступа: https://ru.wikipedia.org/wiki/TF-IDF"
+                        <Button Content="1. Извлечение признаков из текстовых данных с использованием TF-IDF. [Локальный PDF]"
                                 FontSize="20"
                                 FontFamily="Franklin Gothic"
                                 Margin="5"

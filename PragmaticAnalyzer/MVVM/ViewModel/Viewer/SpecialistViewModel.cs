@@ -3,6 +3,7 @@ using PragmaticAnalyzer.Configs;
 using PragmaticAnalyzer.Core;
 using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
+using PragmaticAnalyzer.MVVM.ViewModel.Main;
 using PragmaticAnalyzer.MVVM.Views.Viewer;
 using PragmaticAnalyzer.Services;
 using System.Collections.ObjectModel;
@@ -17,6 +18,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         private SpecialistManagerView? _manager;
         private bool _isAdd;
         public ObservableCollection<Specialist> Specialists { get; set; }
+        public LocalDatabaseSearchViewModel LocalSearch { get; }
         public Specialist? SelectedSpecialist { get => Get<Specialist?>(); set => Set(value); }
         public Specialist ManagerSpecialist { get => Get<Specialist>(); set => Set(value); }
         public string SelectedInteractingOrgan { get => Get<string>(); set => Set(value); }
@@ -25,10 +27,18 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         public string NewMeasure { get => Get<string>(); set => Set(value); }
 
 
-        public SpecialistViewModel(ObservableCollection<Specialist> specialists, Func<string, DataType, Task> updateConfig)
+        public SpecialistViewModel(
+            ObservableCollection<Specialist> specialists,
+            Func<string, DataType, Task> updateConfig,
+            Action<object> setCurrentView)
         {
             Specialists = specialists;
             UpdateConfig += updateConfig;
+            LocalSearch = new(
+                "Поиск только по БД специалистов по ЗИ",
+                () => [new DatabaseSearchSource("БД специалистов по ЗИ", Specialists)],
+                this,
+                setCurrentView);
             _fileService = new FileService();
             ManagerSpecialist = new();
         }

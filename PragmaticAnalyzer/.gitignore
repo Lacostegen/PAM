@@ -1,0 +1,42 @@
+# Build output
+bin/
+obj/
+publish/
+Publish/
+*.nupkg
+
+# Visual Studio and local IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Local runtime configuration
+Config/
+config/
+*.log
+*.tmp
+*.cache
+
+# Local ML models and native runtime files
+Models/
+matcher.exe
+Translator/*.gguf
+Translator/**/*.gguf
+NativeLlama/
+PragmaticAnalyzerChatOnly/Models/
+PragmaticAnalyzerChatOnly/Translator/*.gguf
+PragmaticAnalyzerChatOnly/Translator/**/*.gguf
+PragmaticAnalyzerChatOnly/NativeLlama/
+
+# Generated reports and temporary registration artifacts
+Registration/*.pdf
+Registration/*.docx
+PragmaticAnalyzerChatOnly/Registration/*.pdf
+PragmaticAnalyzerChatOnly/Registration/*.docx
+
+# OS files
+Thumbs.db
+Desktop.ini

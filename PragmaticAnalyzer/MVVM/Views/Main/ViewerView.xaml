@@ -17,6 +17,78 @@
                        Width="1200"
                        Canvas.Top="3" />
 
+                <StackPanel Canvas.Left="0"
+                            Canvas.Top="225"
+                            Orientation="Horizontal">
+                    <Border Width="205"
+                            Height="26"
+                            Background="White"
+                            BorderBrush="Black"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="30" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     Padding="6,3"
+                                     FontSize="11"
+                                     FontFamily="Consolas"
+                                     VerticalContentAlignment="Center"
+                                     AcceptsReturn="False"
+                                     TextWrapping="NoWrap"
+                                     VerticalScrollBarVisibility="Disabled"
+                                     ToolTip="Введите слово или словосочетание"
+                                     Text="{Binding DatabaseSearchText, UpdateSourceTrigger=PropertyChanged}" RenderTransformOrigin="-3.884,7.798" />
+
+                            <Button x:Name="DatabaseSearchModeButton"
+                                    Grid.Column="1"
+                                    BorderThickness="1,0,0,0"
+                                    BorderBrush="Black"
+                                    Background="White"
+                                    Padding="0"
+                                    FontSize="13"
+                                    FontFamily="Consolas"
+                                    ToolTip="{Binding SelectedDatabaseSearchMode}"
+                                    Click="DatabaseSearchModeButton_Click">
+                                <TextBlock Text="⚙"
+                                           FontFamily="Segoe UI Symbol"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                                <Button.ContextMenu>
+                                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                        <MenuItem Header="Содержит текст"
+                                                  Command="{Binding SetDatabaseSearchModeCommand}"
+                                                  CommandParameter="Содержит текст" />
+                                        <MenuItem Header="Слово целиком"
+                                                  Command="{Binding SetDatabaseSearchModeCommand}"
+                                                  CommandParameter="Слово целиком" />
+                                        <MenuItem Header="Все слова"
+                                                  Command="{Binding SetDatabaseSearchModeCommand}"
+                                                  CommandParameter="Все слова" />
+                                        <MenuItem Header="Любое слово"
+                                                  Command="{Binding SetDatabaseSearchModeCommand}"
+                                                  CommandParameter="Любое слово" />
+                                    </ContextMenu>
+                                </Button.ContextMenu>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <Button Content="Найти"
+                            Width="64"
+                            Height="26"
+                            Margin="4,0,0,0"
+                            Padding="4,2"
+                            FontSize="12"
+                            Style="{StaticResource OutlinedGrayButtonStyle}"
+                            Command="{Binding FindDatabaseSearchCommand}" />
+                </StackPanel>
+
                 <Grid Canvas.Top="469"
                       Canvas.Left="-37">
                     <Grid.ColumnDefinitions>

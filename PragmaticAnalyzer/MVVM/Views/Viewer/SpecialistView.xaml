@@ -30,6 +30,12 @@
         <TextBlock Text="Наименование ОВУ:"
                    Style="{StaticResource MainTextBlockStyle}" />
 
+        <ContentControl Grid.Row="0"
+                        Grid.Column="1"
+                        Content="{Binding LocalSearch}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+
         <ListBox Grid.Row="1"
                  Grid.Column="0"
                  Style="{StaticResource RoundedListBoxStyle}"
@@ -44,9 +50,8 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <Border Grid.Row="0"
+        <Border Grid.Row="1"
                 Grid.Column="1"
-                Grid.RowSpan="2"
                 Margin="5"
                 BorderBrush="Black"
                 BorderThickness="1"

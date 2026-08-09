@@ -9,12 +9,47 @@
         xmlns:viewMain="clr-namespace:PragmaticAnalyzer.MVVM.Views.Main"
         xmlns:viewViewer="clr-namespace:PragmaticAnalyzer.MVVM.Views.Viewer"
         xmlns:viewAlg="clr-namespace:PragmaticAnalyzer.MVVM.Views.AlgorithmInformation"
+        xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
         d:DataContext="{d:DesignInstance Type=vmMain:MainViewModel}"
         mc:Ignorable="d"
         MinHeight="850"
         MinWidth="1500"
         WindowStartupLocation="CenterScreen"
         Title="Модуль работы с источниками знаний ИБ v1.1.2">
+    <Window.Resources>
+        <assist:CurrentViewEqualsConverter x:Key="CurrentViewEqualsConverter" />
+
+        <Style x:Key="NavigationButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource OutlinedGrayButtonStyle}">
+            <Setter Property="Background"
+                    Value="White" />
+            <Setter Property="BorderBrush"
+                    Value="#444444" />
+            <Setter Property="BorderThickness"
+                    Value="1" />
+            <Style.Triggers>
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <MultiBinding Converter="{StaticResource CurrentViewEqualsConverter}">
+                            <Binding Path="CurrentView" />
+                            <Binding RelativeSource="{RelativeSource Self}"
+                                     Path="Tag" />
+                        </MultiBinding>
+                    </DataTrigger.Binding>
+                    <Setter Property="Background"
+                            Value="#DDEBFF" />
+                    <Setter Property="BorderBrush"
+                            Value="#2F6FDB" />
+                    <Setter Property="BorderThickness"
+                            Value="2" />
+                    <Setter Property="Foreground"
+                            Value="#123A70" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="75" />
@@ -31,44 +66,52 @@
                         Orientation="Horizontal"
                         HorizontalAlignment="Center">
                 <Button Content="Загрузить БД"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.SetVm}" />
+                        CommandParameter="{Binding ViewModelsService.SetVm}"
+                        Tag="{Binding ViewModelsService.SetVm}" />
 
                 <Button Content="Работа с БД"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.ViewerVm}" />
+                        CommandParameter="{Binding ViewModelsService.ViewerVm}"
+                        Tag="{Binding ViewModelsService.ViewerVm}" />
 
                 <Button Content="Работа с онтологиями"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.OntologyVm}" />
+                        CommandParameter="{Binding ViewModelsService.OntologyVm}"
+                        Tag="{Binding ViewModelsService.OntologyVm}" />
 
                 <Button Content="Работа с моделями"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.SettingVm}" />
+                        CommandParameter="{Binding ViewModelsService.SettingVm}"
+                        Tag="{Binding ViewModelsService.SettingVm}" />
 
                 <Button Content="Работа с ИЗ"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.CreatorVm}" />
+                        CommandParameter="{Binding ViewModelsService.CreatorVm}"
+                        Tag="{Binding ViewModelsService.CreatorVm}" />
 
                 <Button Content="Сформировать отчет"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.ConnectionVm}" />
+                        CommandParameter="{Binding ViewModelsService.ConnectionVm}"
+                        Tag="{Binding ViewModelsService.ConnectionVm}" />
 
                 <Button Content="Общение с моделью"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.CommunicationVm}" />
+                        CommandParameter="{Binding ViewModelsService.CommunicationVm}"
+                        Tag="{Binding ViewModelsService.CommunicationVm}" />
 
                 <Button Content="Информация"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource NavigationButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
-                        CommandParameter="{Binding ViewModelsService.InformationVm}" />
+                        CommandParameter="{Binding ViewModelsService.InformationVm}"
+                        Tag="{Binding ViewModelsService.InformationVm}" />
             </StackPanel>
         </Border>
 
@@ -89,6 +132,21 @@
                         <viewMain:ViewerView />
                     </DataTemplate>
                     <!--Работа с БД-->
+
+                    <DataTemplate DataType="{x:Type vmMain:DatabaseSearchResultsViewModel}">
+                        <viewMain:DatabaseSearchResultsView />
+                    </DataTemplate>
+                    <!--Результаты поиска по БД-->
+
+                    <DataTemplate DataType="{x:Type vmMain:DatabaseSearchDetailsViewModel}">
+                        <viewMain:DatabaseSearchDetailsView />
+                    </DataTemplate>
+                    <!--Полный результат поиска по БД-->
+
+                    <DataTemplate DataType="{x:Type vmMain:LocalDatabaseSearchViewModel}">
+                        <viewMain:DatabaseLocalSearchBarView />
+                    </DataTemplate>
+                    <!--Локальный поиск по текущей БД-->
 
                     <DataTemplate DataType="{x:Type vmMain:OntologyViewModel}">
                         <viewMain:OntologyView />
@@ -159,6 +217,11 @@
                         <viewViewer:SpecialistView />
                     </DataTemplate>
                     <!--Специалист-->
+
+                    <DataTemplate DataType="{x:Type vmViewer:CurrentStatusViewModel}">
+                        <viewViewer:CurrentStatusView />
+                    </DataTemplate>
+                    <!--Текущее состояние-->
 
                     <DataTemplate DataType="{x:Type vmViewer:ReferenceStatusViewModel}">
                         <viewViewer:ReferenceStatusView />

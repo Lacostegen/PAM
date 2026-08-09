@@ -63,9 +63,15 @@
             </ComboBox.ItemTemplate>
         </ComboBox>
 
-        <Border Grid.Row="0"
+        <ContentControl Grid.Row="0"
+                        Grid.Column="1"
+                        Content="{Binding LocalSearch}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+
+        <Border Grid.Row="1"
                 Grid.Column="1"
-                Grid.RowSpan="4"
+                Grid.RowSpan="3"
                 Margin="5"
                 BorderBrush="Black"
                 BorderThickness="1"

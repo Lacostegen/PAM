@@ -1,6 +1,5 @@
-﻿using System.Diagnostics;
-using System.Windows.Controls;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace PragmaticAnalyzer.MVVM.Views.Main
 {
@@ -9,6 +8,20 @@ namespace PragmaticAnalyzer.MVVM.Views.Main
         public ViewerView()
         {
             InitializeComponent();
+        }
+
+        private void DatabaseSearchModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button { ContextMenu: not null } button)
+            {
+                button.ContextMenu.PlacementTarget = button;
+                button.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
         }
     }
 }

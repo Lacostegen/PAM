@@ -16,14 +16,11 @@ namespace PragmaticAnalyzer.Abstractions
             string port,
             CancellationToken ct = default);
 
-        Task<Result<bool>> StartTranslatorServerAsync(
-            string koboldCppPath,
-            string modelPath,
-            string port,
-            int contextSize,
-            CancellationToken ct = default);
+        Task<Result<bool>> EnsureMatcherServerAvailableAsync(CancellationToken ct = default);
 
-        Task<Result<bool>> StopTranslatorServerAsync();
+        Result<string> PrepareMatcherModelPath(string modelPath);
+
+        Result<Dictionary<string, string>> PrepareMatcherSourcePaths(IEnumerable<string> sourcePaths);
 
         Task<Result<T>> SendRequestAsync<T>(
             IRequest request,

@@ -77,15 +77,17 @@
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="auto" />
-                    <ColumnDefinition  Width="0,2*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Row="0"
                            Grid.Column="0"
                            Text="Добавить сущность в выбранную онтологию:"
                            FontSize="15"
-                           FontFamily="Consolas" />
+                           FontFamily="Consolas"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center" />
 
                 <CheckBox Grid.Row="0"
                           Grid.Column="1"

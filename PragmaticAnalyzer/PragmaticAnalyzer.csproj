@@ -12,6 +12,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="PragmaticAnalyzerChatOnly\**" />
+    <EmbeddedResource Remove="PragmaticAnalyzerChatOnly\**" />
+    <None Remove="PragmaticAnalyzerChatOnly\**" />
+    <Page Remove="PragmaticAnalyzerChatOnly\**" />
     <Compile Remove="Resource\**" />
     <EmbeddedResource Remove="Resource\**" />
     <None Remove="Resource\**" />
@@ -33,6 +37,8 @@
 
   <ItemGroup>
     <Content Include="Images\icon.ico" />
+    <Content Include="Resource\**\*.pdf"
+             CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
@@ -57,6 +63,8 @@
   <ItemGroup>
     <PackageReference Include="Aspose.Cells" Version="24.11.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+	<PackageReference Include="LLamaSharp" Version="0.27.0" />
+	<PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.27.0" />
     <PackageReference Include="DocX" Version="5.0.0" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />

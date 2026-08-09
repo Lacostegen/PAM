@@ -25,5 +25,18 @@ namespace PragmaticAnalyzer
 
             base.OnStartup(e);
         }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            try
+            {
+                InfrastructureOrchestrator.LocalLlamaService.Unload();
+                InfrastructureOrchestrator.ApiService.StopServer();
+            }
+            finally
+            {
+                base.OnExit(e);
+            }
+        }
     }
 }

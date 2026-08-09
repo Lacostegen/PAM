@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.SettingView"
+<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.SettingView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -17,7 +17,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition />
                 <RowDefinition />
-                <RowDefinition />
             </Grid.RowDefinitions>
 
             <Border Grid.Row="0"
@@ -30,6 +29,7 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition />
                         <RowDefinition />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0"
@@ -50,7 +50,11 @@
                         <ComboBox Grid.Column="0"
                                   Style="{StaticResource RoundedComboBoxStyle}"
                                   ItemsSource="{Binding WordTwoVecConfigs}"
-                                  SelectedItem="{Binding SelectedWordTwoVecConfig}">
+                                  SelectedItem="{Binding SelectedWordTwoVecConfig}"
+                                  IsEnabled="{Binding HasWordTwoVecModels}"
+                                  MinHeight="32"
+                                  MaxDropDownHeight="260"
+                                  ToolTip="Список загруженных Word2Vec-моделей">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
@@ -102,6 +106,12 @@
                                 Style="{StaticResource OutlinedGrayButtonStyle}"
                                 Command="{Binding RetrainWordTwoVecModelCommand}" />
                     </Grid>
+
+                    <TextBlock Grid.Row="3"
+                               Text="{Binding WordTwoVecStatusText}"
+                               Margin="8,2,8,6"
+                               Foreground="#555"
+                               TextWrapping="Wrap" />
                 </Grid>
             </Border>
 
@@ -115,6 +125,7 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition />
                         <RowDefinition />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <Grid Grid.Row="0"
@@ -135,7 +146,11 @@
                         <ComboBox Grid.Column="0"
                                   Style="{StaticResource RoundedComboBoxStyle}"
                                   ItemsSource="{Binding FastTextConfigs}"
-                                  SelectedItem="{Binding SelectedFastTextConfig, UpdateSourceTrigger=PropertyChanged}">
+                                  SelectedItem="{Binding SelectedFastTextConfig, UpdateSourceTrigger=PropertyChanged}"
+                                  IsEnabled="{Binding HasFastTextModels}"
+                                  MinHeight="32"
+                                  MaxDropDownHeight="260"
+                                  ToolTip="Список загруженных FastText-моделей">
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal">
@@ -187,6 +202,12 @@
                                 Style="{StaticResource OutlinedGrayButtonStyle}"
                                 Command="{Binding RetrainFastTextModelCommand}" />
                     </Grid>
+
+                    <TextBlock Grid.Row="3"
+                               Text="{Binding FastTextStatusText}"
+                               Margin="8,2,8,6"
+                               Foreground="#555"
+                               TextWrapping="Wrap" />
                 </Grid>
             </Border>
         </Grid>

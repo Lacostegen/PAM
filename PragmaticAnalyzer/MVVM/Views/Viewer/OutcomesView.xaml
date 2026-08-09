@@ -23,24 +23,32 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
+        <ContentControl Grid.Row="0"
+                        Grid.ColumnSpan="2"
+                        Content="{Binding LocalSearch}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,4,4" />
+
+        <TextBlock Grid.Row="1"
                    Grid.Column="0"
                    Text="Негативные последствия"
                    FontSize="20"
                    HorizontalAlignment="Center"
                    Style="{StaticResource MainTextBlockStyle}" />
 
-        <TextBlock Grid.Row="0"
+        <TextBlock Grid.Row="1"
                    Grid.Column="1"
                    Text="Технологии оценки риска"
                    FontSize="20"
                    HorizontalAlignment="Center"
                    Style="{StaticResource MainTextBlockStyle}" />
 
-        <Grid Grid.Row="1"
+        <Grid Grid.Row="2"
               Grid.Column="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />
@@ -108,7 +116,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1"
+        <Grid Grid.Row="2"
               Grid.Column="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="100" />

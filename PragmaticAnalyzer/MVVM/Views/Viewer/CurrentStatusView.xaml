@@ -1,0 +1,96 @@
+<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.CurrentStatusView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:assist="clr-namespace:PragmaticAnalyzer.Assistant"
+             xmlns:vmViewer="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Viewer"
+             d:DataContext="{d:DesignInstance Type=vmViewer:CurrentStatusViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="500"
+             d:DesignWidth="900">
+    <UserControl.Resources>
+        <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Grid.Column="0"
+                   Text="Текущее состояние:"
+                   Style="{StaticResource MainTextBlockStyle}" />
+
+        <ContentControl Grid.Row="0"
+                        Grid.Column="1"
+                        Content="{Binding LocalSearch}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+
+        <ListBox Grid.Row="1"
+                 Grid.Column="0"
+                 ItemsSource="{Binding CurrentsStatus}"
+                 SelectedItem="{Binding SelectedCurrentStatus}"
+                 Style="{StaticResource RoundedListBoxStyle}"
+                 ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding NameSoftware}"
+                               Style="{StaticResource MainTextBlockStyle}"
+                               Margin="1" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Border Grid.Row="1"
+                Grid.Column="1"
+                Margin="5"
+                BorderBrush="Black"
+                BorderThickness="1"
+                CornerRadius="6">
+            <ScrollViewer Margin="5"
+                          VerticalScrollBarVisibility="Auto">
+                <WrapPanel Visibility="{Binding SelectedCurrentStatus, Converter={StaticResource NullToVisibilityConverter}}">
+                    <cc:LabeledValueBox LabelText="Наименование ПО"
+                                        ValueText="{Binding SelectedCurrentStatus.NameSoftware}" />
+
+                    <cc:LabeledValueBox LabelText="Время поступления"
+                                        ValueText="{Binding SelectedCurrentStatus.TimeAdmission}" />
+
+                    <cc:LabeledValueBox LabelText="Размещение"
+                                        ValueText="{Binding SelectedCurrentStatus.Dislocation}" />
+
+                    <cc:LabeledValueBox LabelText="Режим работы"
+                                        ValueText="{Binding SelectedCurrentStatus.OperatingMode}" />
+
+                    <cc:LabeledValueBox LabelText="Коэффициент важности"
+                                        ValueText="{Binding SelectedCurrentStatus.ImportanceCoefficient}" />
+
+                    <cc:LabeledValueBox LabelText="Источник"
+                                        ValueText="{Binding SelectedCurrentStatus.Source}" />
+
+                    <cc:LabeledValueBox LabelText="Атрибут"
+                                        ValueText="{Binding SelectedCurrentStatus.AtributName}" />
+
+                    <cc:LabeledValueBox LabelText="Значение атрибута"
+                                        ValueText="{Binding SelectedCurrentStatus.AtributValue}" />
+
+                    <cc:LabeledValueBox LabelText="Требуемое значение"
+                                        ValueText="{Binding SelectedCurrentStatus.AtributRequiredValue}" />
+
+                    <cc:LabeledValueBox LabelText="Значение тега"
+                                        ValueText="{Binding SelectedCurrentStatus.ValueTeg}" />
+                </WrapPanel>
+            </ScrollViewer>
+        </Border>
+    </Grid>
+</UserControl>

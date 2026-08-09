@@ -1,5 +1,7 @@
 ﻿using Microsoft.Win32;
 
+using System.IO;
+
 namespace PragmaticAnalyzer.Services
 {
     public class DialogService
@@ -11,12 +13,18 @@ namespace PragmaticAnalyzer.Services
         public const string GgufModelFilter = "GGUF model files (*.gguf)|*.gguf|All files (*.*)|*.*";
         public const string ExeFilter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*";
 
-        public static string? OpenFileDialog(string? filter = null)
+        public static string? OpenFileDialog(string? filter = null, string? initialDirectory = null)
         {
             var dialog = new OpenFileDialog
             {
                 Filter = filter
             };
+
+            if (!string.IsNullOrWhiteSpace(initialDirectory) && Directory.Exists(initialDirectory))
+            {
+                dialog.InitialDirectory = initialDirectory;
+            }
+
             return dialog.ShowDialog() is true ? dialog.FileName : null;
         } // возварщает абсолютный путь выбранный в проводнике
 

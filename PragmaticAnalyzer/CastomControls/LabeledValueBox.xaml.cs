@@ -1,4 +1,5 @@
-﻿using System.Windows;
+using System.Collections;
+using System.Windows;
 
 namespace PragmaticAnalyzer.CastomControls
 {
@@ -10,6 +11,13 @@ namespace PragmaticAnalyzer.CastomControls
         public static readonly DependencyProperty ValueTextProperty =
             DependencyProperty.Register("ValueText", typeof(string), typeof(LabeledValueBox), new PropertyMetadata(string.Empty));
 
+        public static readonly DependencyProperty HighlightedValueSegmentsProperty =
+            DependencyProperty.Register(
+                nameof(HighlightedValueSegments),
+                typeof(IEnumerable),
+                typeof(LabeledValueBox),
+                new PropertyMetadata(null));
+
         public string LabelText
         {
             get => (string)GetValue(LabelTextProperty);
@@ -20,6 +28,12 @@ namespace PragmaticAnalyzer.CastomControls
         {
             get => (string)GetValue(ValueTextProperty);
             set => SetValue(ValueTextProperty, value);
+        }
+
+        public IEnumerable? HighlightedValueSegments
+        {
+            get => (IEnumerable?)GetValue(HighlightedValueSegmentsProperty);
+            set => SetValue(HighlightedValueSegmentsProperty, value);
         }
 
         public LabeledValueBox()

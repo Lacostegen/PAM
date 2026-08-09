@@ -1,0 +1,17 @@
+<Window x:Class="PragmaticAnalyzer.MVVM.Views.Main.MainView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vmMain="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+        xmlns:viewMain="clr-namespace:PragmaticAnalyzer.MVVM.Views.Main"
+        d:DataContext="{d:DesignInstance Type=vmMain:MainViewModel}"
+        mc:Ignorable="d"
+        MinHeight="850"
+        MinWidth="1300"
+        WindowStartupLocation="CenterScreen"
+        Title="PragmaticAnalyzer">
+    <Grid Margin="5">
+        <viewMain:CommunicationView DataContext="{Binding ViewModelsService.CommunicationVm}" />
+    </Grid>
+</Window>

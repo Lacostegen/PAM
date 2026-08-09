@@ -4,10 +4,16 @@ using PragmaticAnalyzer.Core;
 using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
 using PragmaticAnalyzer.Extensions;
+using PragmaticAnalyzer.MVVM.Model.Rag;
 using PragmaticAnalyzer.MVVM.ViewModel.Main;
 using PragmaticAnalyzer.MVVM.ViewModel.Viewer;
+using PragmaticAnalyzer.Services.Rag;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using PragmaticAnalyzer.Services.LocalLlama;
+using System.Collections.Generic;
 
 namespace PragmaticAnalyzer.Services
 {
@@ -25,7 +31,14 @@ namespace PragmaticAnalyzer.Services
         private readonly HashSet<Guid> _vulJvnHashSet = [];
         private readonly HashSet<Guid> _vulNvdHashSet = [];
         public static IApiService ApiService { get; } = new ApiService();
+        public static RagIndexService RagIndexService { get; } = new RagIndexService();
 
+        public static LocalLlamaService LocalLlamaService { get; } = new();
+
+        public static bool IsLocalLlamaLoaded => LocalLlamaService.IsLoaded;
+
+        public static string LocalLlamaStatusText { get; private set; } =
+            "Встроенная GGUF-модель: не загружена";
         public MainViewModel MainVm { get; }
         public ThreatViewModel ThreatVm { get; }
         public VulnerabilitieViewModel VulnerabilitieVm { get; }
@@ -46,21 +59,279 @@ namespace PragmaticAnalyzer.Services
         public CreatorViewModel CreatorVm { get; }
         public CommunicationViewModel CommunicationVm { get; }
 
+        public static void StartRagBackgroundLoading()
+        {
+            _ = Task.Run(async () =>
+            {
+                await LoadRagIndexInBackgroundAsync();
+            });
+        }
+
+        public static async Task EnsureLocalLlamaLoadedAsync(
+    int contextSize = 4096,
+    int gpuLayerCount = 0,
+    int threadCount = 0,
+    int batchSize = 512,
+    int microBatchSize = 512,
+    int readinessProbeMaxTokens = 24,
+    CancellationToken ct = default)
+        {
+            if (LocalLlamaService.IsLoaded)
+            {
+                return;
+            }
+
+            var modelPath = ResolveLocalGgufModelPath();
+
+            if (string.IsNullOrWhiteSpace(modelPath))
+            {
+                LocalLlamaStatusText = "Встроенная GGUF-модель: файл .gguf не найден";
+
+                throw new FileNotFoundException(
+                    "GGUF-модель не найдена. Положи .gguf файл в папку Translator рядом с exe или внутри проекта PragmaticAnalyzer.");
+            }
+
+            try
+            {
+                LocalLlamaStatusText = "Встроенная GGUF-модель: загрузка...";
+
+                await LocalLlamaService.LoadAsync(
+                    modelPath,
+                    contextSize,
+                    gpuLayerCount,
+                    threadCount,
+                    batchSize,
+                    microBatchSize,
+                    readinessProbeMaxTokens,
+                    ct: ct);
+
+                LocalLlamaStatusText =
+                    $"Встроенная GGUF-модель: загружена ({Path.GetFileName(modelPath)})";
+            }
+            catch (OperationCanceledException)
+            {
+                LocalLlamaStatusText = "Встроенная GGUF-модель: загрузка отменена";
+                throw;
+            }
+            catch (Exception ex)
+            {
+                LocalLlamaStatusText =
+                    $"Встроенная GGUF-модель: ошибка загрузки — {ex.Message}";
+
+                throw;
+            }
+        }
+
+        private static string ResolveLocalGgufModelPath()
+        {
+            var candidates = new List<string>
+    {
+        Path.Combine(Environment.CurrentDirectory, "Translator")
+    };
+
+            var directory = new DirectoryInfo(Environment.CurrentDirectory);
+
+            for (var i = 0; i < 8 && directory != null; i++)
+            {
+                candidates.Add(Path.Combine(directory.FullName, "Translator"));
+
+                directory = directory.Parent;
+            }
+
+            foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (!Directory.Exists(candidate))
+                {
+                    continue;
+                }
+
+                var modelPath = Directory
+                    .EnumerateFiles(candidate, "*.gguf", SearchOption.TopDirectoryOnly)
+                    .OrderByDescending(File.GetLastWriteTimeUtc)
+                    .FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(modelPath))
+                {
+                    return modelPath;
+                }
+            }
+
+            return string.Empty;
+        }
+        public static async Task LoadRagIndexInBackgroundAsync(CancellationToken ct = default)
+        {
+            try
+            {
+                IsRagLoading = true;
+                IsRagReady = false;
+                RagStatusText = "RAG: загрузка индекса...";
+
+                var fileService = new FileService();
+
+                var ragConfig = await fileService.LoadFileToPathAsync<RagConfig>(
+                    GlobalConfig.RagConfigPath,
+                    ct);
+
+                ragConfig ??= new RagConfig();
+                var ragConfigChanged = ragConfig.NormalizePortablePaths();
+
+                // По твоему решению RAG должен быть подключён всегда.
+                ragConfig.IsEnabled = true;
+
+                if (ragConfigChanged)
+                {
+                    await fileService.SaveFileAsync(
+                        ragConfig,
+                        GlobalConfig.RagConfigPath,
+                        ct);
+                }
+
+                // 1. Сначала пытаемся быстро загрузить готовый общий индекс.
+                if (RagIndexService.HasSavedIndex(
+                        ragConfig.KnowledgeBasePath,
+                        RagIndexPart.All))
+                {
+                    var loadedCount = await RagIndexService.LoadFromDiskAsync(
+                        ragConfig.KnowledgeBasePath,
+                        RagIndexPart.All,
+                        ct);
+
+                    if (loadedCount > 0)
+                    {
+                        IsRagReady = true;
+                        RagStatusText = $"RAG: готово, документов: {loadedCount}";
+                        return;
+                    }
+                }
+
+                // 2. Если готового индекса нет — строим индекс из JSON-баз и руководств.
+                RagStatusText = "RAG: индекс не найден, построение из баз и руководств...";
+
+                RagIndexService.Clear();
+
+                var databaseDocumentsCount = 0;
+
+                if (ragConfig.UseProjectDatabases)
+                {
+                    databaseDocumentsCount = RagIndexService.LoadProjectDatabases(
+                        ragConfig.ProjectDatabasePath);
+
+                    var databaseDocuments = RagIndexService.Documents
+                        .Where(document => document.SourceKind == "database")
+                        .ToList();
+
+                    if (databaseDocuments.Count > 0)
+                    {
+                        await RagIndexService.SaveDocumentsToDiskAsync(
+                            ragConfig.KnowledgeBasePath,
+                            databaseDocuments,
+                            RagIndexPart.Databases,
+                            ct);
+                    }
+                }
+
+                var manualDocumentsCount = 0;
+
+                if (ragConfig.UseManuals)
+                {
+                    manualDocumentsCount = RagIndexService.LoadManuals(
+                        ragConfig.KnowledgeBasePath);
+
+                    var manualDocuments = RagIndexService.Documents
+                        .Where(document => document.SourceKind == "manual")
+                        .ToList();
+
+                    if (manualDocuments.Count > 0)
+                    {
+                        await RagIndexService.SaveDocumentsToDiskAsync(
+                            ragConfig.KnowledgeBasePath,
+                            manualDocuments,
+                            RagIndexPart.Manuals,
+                            ct);
+                    }
+                }
+
+                var totalDocumentsCount = RagIndexService.DocumentCount;
+
+                if (totalDocumentsCount > 0)
+                {
+                    await RagIndexService.SaveToDiskAsync(
+                        ragConfig.KnowledgeBasePath,
+                        RagIndexPart.All,
+                        ct);
+
+                    IsRagReady = true;
+                    RagStatusText =
+                        $"RAG: индекс построен, документов: {totalDocumentsCount} " +
+                        $"(базы: {databaseDocumentsCount}, руководства: {manualDocumentsCount})";
+                }
+                else
+                {
+                    IsRagReady = false;
+                    RagStatusText = "RAG: документы не найдены";
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                IsRagReady = false;
+                RagStatusText = "RAG: загрузка отменена";
+            }
+            catch (Exception ex)
+            {
+                IsRagReady = false;
+                RagStatusText = $"RAG: ошибка загрузки — {ex.Message}";
+            }
+            finally
+            {
+                IsRagLoading = false;
+            }
+        }
+        public static bool IsRagLoading { get; private set; }
+
+        public static bool IsRagReady { get; private set; }
+
+        public static string RagStatusText { get; private set; } = "RAG: не загружен";
+
+        public static int RagDocumentCount => RagIndexService.DocumentCount;
+
+        public static async Task<int> LoadRagManualsAsync(CancellationToken ct = default)
+        {
+            var fileService = new FileService();
+
+            var ragConfig = await fileService.LoadFileToPathAsync<RagConfig>(
+                GlobalConfig.RagConfigPath,
+                ct);
+
+            ragConfig ??= new RagConfig();
+            ragConfig.NormalizePortablePaths();
+
+            return await Task.Run(() =>
+            {
+                RagIndexService.Clear();
+
+                var loadedCount = RagIndexService.LoadManuals(
+                    ragConfig.KnowledgeBasePath);
+
+                return loadedCount;
+            }, ct);
+        }
+
+
         public InfrastructureOrchestrator()
         {
             MainVm = new(this);
             SetVm = new(_lastUpdateConfig, this);
-            ThreatVm = new([], SetVm.UpdateConfig, _threatConfig);
-            VulnerabilitieVm = new(SetVm.UpdateConfig, _vulConfig, _vulJvnHashSet, _vulNvdHashSet);
-            ExploitVm = new([], SetVm.UpdateConfig, _exploitConfig);
+            ThreatVm = new([], SetVm.UpdateConfig, _threatConfig, MainVm.OnSetCurrentView);
+            VulnerabilitieVm = new(SetVm.UpdateConfig, _vulConfig, _vulJvnHashSet, _vulNvdHashSet, MainVm.OnSetCurrentView);
+            ExploitVm = new([], SetVm.UpdateConfig, _exploitConfig, MainVm.OnSetCurrentView);
             OntologyVm = new([]);
-            TacticVm = new([], SetVm.UpdateConfig);
-            ViolatorVm = new([], SetVm.UpdateConfig);
-            ProtectionMeasureVm = new([], SetVm.UpdateConfig);
-            SpecialistVm = new([], SetVm.UpdateConfig);
-            ReferenceStatusVm = new([], SetVm.UpdateConfig);
-            CurrentStatusVm = new([], SetVm.UpdateConfig);
-            OutcomeVm = new(new(), SetVm.UpdateConfig);
+            TacticVm = new([], SetVm.UpdateConfig, MainVm.OnSetCurrentView);
+            ViolatorVm = new([], SetVm.UpdateConfig, MainVm.OnSetCurrentView);
+            ProtectionMeasureVm = new([], SetVm.UpdateConfig, MainVm.OnSetCurrentView);
+            SpecialistVm = new([], SetVm.UpdateConfig, MainVm.OnSetCurrentView);
+            ReferenceStatusVm = new([], SetVm.UpdateConfig, MainVm.OnSetCurrentView);
+            CurrentStatusVm = new([], SetVm.UpdateConfig, MainVm.OnSetCurrentView);
+            OutcomeVm = new(new(), SetVm.UpdateConfig, MainVm.OnSetCurrentView);
             ViewerVm = new(this, _lastUpdateConfig, MainVm.OnSetCurrentView);
             ConnectionVm = new(this, ApiService, _availableDatabasesConfig, _filePathToDatabase);
             SettingVm = new(_wordTwoVecConfig, _fastTextVecConfig, ApiService);
@@ -126,28 +397,20 @@ namespace PragmaticAnalyzer.Services
             }          //
             if (File.Exists(GlobalConfig.WordTwoVecConfigPath))
             {
-                var wordTwoVecConfigs = await _fileService.LoadDTOAsync<ObservableCollection<ModelConfig>>(GlobalConfig.WordTwoVecConfigPath, DataType.WordTwoVecConfig) ?? [];
-                foreach (var config in wordTwoVecConfigs)
-                {
-                    if (config.Path != Path.Combine(GlobalConfig.ModelsPath, config.DisplayedName))
-                    {
-                        config.Path = Path.Combine(GlobalConfig.ModelsPath, config.DisplayedName);
-                        await _fileService.SaveDTOAsync(wordTwoVecConfigs, DataType.WordTwoVecConfig, GlobalConfig.WordTwoVecConfigPath);
-                    }
-                }
+                var wordTwoVecConfigs = await LoadMatcherModelConfigsAsync(
+                    GlobalConfig.WordTwoVecConfigPath,
+                    DataType.WordTwoVecConfig,
+                    Algorithm.WordTwoVec);
+
                 _wordTwoVecConfig.ReplaceAll(wordTwoVecConfigs);
             } //
             if (File.Exists(GlobalConfig.FastTextConfigPath))
             {
-                var fastTextConfigs = await _fileService.LoadDTOAsync<ObservableCollection<ModelConfig>>(GlobalConfig.FastTextConfigPath, DataType.FastTextConfig) ?? [];
-                foreach (var config in fastTextConfigs)
-                {
-                    if (config.DisplayedName != Path.Combine(GlobalConfig.ModelsPath, config.DisplayedName))
-                    {
-                        config.Path = Path.Combine(GlobalConfig.ModelsPath, config.DisplayedName);
-                        await _fileService.SaveDTOAsync(fastTextConfigs, DataType.FastTextConfig, GlobalConfig.FastTextConfigPath);
-                    }
-                }
+                var fastTextConfigs = await LoadMatcherModelConfigsAsync(
+                    GlobalConfig.FastTextConfigPath,
+                    DataType.FastTextConfig,
+                    Algorithm.FastText);
+
                 _fastTextVecConfig.ReplaceAll(fastTextConfigs);
             }         //
 
@@ -330,7 +593,128 @@ namespace PragmaticAnalyzer.Services
             SettingVm.NotifySelectedModels(); // оповещение о выборе модели
             _availableDatabasesConfig.ReplaceAll(FileService.GetAvailableDatabaseConfigs()); // обновление используемых баз данных
             ApiService.StartServer(); // запуск серверов
+            StartRagBackgroundLoading();
         } // проверятет все глобальные пути (конфиги, базы данных) если нет - создает, если есть - загргужает
+
+        private async Task<ObservableCollection<ModelConfig>> LoadMatcherModelConfigsAsync(
+            string configPath,
+            DataType dataType,
+            Algorithm expectedAlgorithm)
+        {
+            var loadedConfigs =
+                await _fileService.LoadDTOAsync<ObservableCollection<ModelConfig>>(configPath, dataType) ?? [];
+
+            var normalizedConfigs = new ObservableCollection<ModelConfig>();
+            var changed = false;
+
+            foreach (var config in loadedConfigs)
+            {
+                if (!TryNormalizeMatcherModelConfig(config, expectedAlgorithm, out var normalizedConfig))
+                {
+                    changed = true;
+                    continue;
+                }
+
+                changed |= !ReferenceEquals(config, normalizedConfig)
+                    || config.Algorithm != expectedAlgorithm
+                    || !string.Equals(config.Path, normalizedConfig.Path, StringComparison.OrdinalIgnoreCase);
+
+                normalizedConfigs.Add(normalizedConfig);
+            }
+
+            changed |= NormalizeUsedModel(normalizedConfigs);
+
+            if (changed)
+            {
+                await _fileService.SaveDTOAsync(normalizedConfigs, dataType, configPath);
+            }
+
+            return normalizedConfigs;
+        }
+
+        private static bool TryNormalizeMatcherModelConfig(
+            ModelConfig config,
+            Algorithm expectedAlgorithm,
+            out ModelConfig normalizedConfig)
+        {
+            normalizedConfig = config;
+
+            if (string.IsNullOrWhiteSpace(config.Path))
+            {
+                return false;
+            }
+
+            var fileName = Path.GetFileName(config.Path);
+            if (string.IsNullOrWhiteSpace(fileName)
+                || !string.Equals(Path.GetExtension(fileName), ".bin", StringComparison.OrdinalIgnoreCase)
+                || LooksLikeAnotherMatcherAlgorithm(fileName, expectedAlgorithm))
+            {
+                return false;
+            }
+
+            var pathInModels = Path.GetFullPath(Path.Combine(GlobalConfig.ModelsPath, fileName));
+            if (!File.Exists(pathInModels))
+            {
+                return false;
+            }
+
+            normalizedConfig = new ModelConfig
+            {
+                Path = pathInModels,
+                Algorithm = expectedAlgorithm,
+                IsUsed = config.IsUsed
+            };
+
+            return true;
+        }
+
+        private static bool NormalizeUsedModel(ObservableCollection<ModelConfig> configs)
+        {
+            if (configs.Count == 0)
+            {
+                return false;
+            }
+
+            var changed = false;
+            var usedModelWasFound = false;
+
+            foreach (var config in configs)
+            {
+                if (config.IsUsed && !usedModelWasFound)
+                {
+                    usedModelWasFound = true;
+                    continue;
+                }
+
+                if (config.IsUsed)
+                {
+                    config.IsUsed = false;
+                    changed = true;
+                }
+            }
+
+            if (!usedModelWasFound)
+            {
+                configs[0].IsUsed = true;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static bool LooksLikeAnotherMatcherAlgorithm(string fileName, Algorithm expectedAlgorithm)
+        {
+            var normalizedName = fileName.ToLowerInvariant();
+
+            return expectedAlgorithm switch
+            {
+                Algorithm.WordTwoVec => normalizedName.Contains("fasttext") || normalizedName.Contains("fast_text"),
+                Algorithm.FastText => normalizedName.Contains("word2vec")
+                    || normalizedName.Contains("wordtwovec")
+                    || normalizedName.Contains("word_two_vec"),
+                _ => false
+            };
+        }
 
         public async Task SaveDatabaseAsync(object database, string name, DataType dataType)
         {
@@ -358,8 +742,23 @@ namespace PragmaticAnalyzer.Services
 
         public async Task CompletionWorkAsync()
         {
-            await _fileService.SaveDTOAsync(SettingVm.WordTwoVecConfigs, DataType.WordTwoVecConfig, GlobalConfig.WordTwoVecConfigPath);
-            await _fileService.SaveDTOAsync(SettingVm.FastTextConfigs, DataType.FastTextConfig, GlobalConfig.FastTextConfigPath);
+            try
+            {
+                await _fileService.SaveDTOAsync(SettingVm.WordTwoVecConfigs, DataType.WordTwoVecConfig, GlobalConfig.WordTwoVecConfigPath);
+                await _fileService.SaveDTOAsync(SettingVm.FastTextConfigs, DataType.FastTextConfig, GlobalConfig.FastTextConfigPath);
+            }
+            finally
+            {
+                try
+                {
+                    CommunicationVm.Dispose();
+                }
+                finally
+                {
+                    LocalLlamaService.Unload();
+                    ApiService.StopServer();
+                }
+            }
         }
     } // сервис инициализации программы
 }

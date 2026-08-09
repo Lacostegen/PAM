@@ -45,6 +45,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         public bool Progress { get => Get<bool>(); set => Set(value); }
         public bool FilteringCvss { get => Get<bool>(); set => Set(value); }
         public Visibility ReportVisibility { get => Get<Visibility>(); set => Set(value); }
+        public string SearchStatusText { get => Get<string>(); set => Set(value); }
 
         public ConnectionViewModel(IInfrastructureOrchestrator viewModelsService, IApiService apiService,
                                                           ObservableCollection<AvailableDatabaseConfig> availableDatabasesConfig, Dictionary<string, object> filePathToDatabase)
@@ -65,96 +66,213 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             Progress = false;
             FilteringCvss = true;
             ReportVisibility = Visibility.Hidden;
+            SelectedAlgorithm = Algorithm.TfIdf;
+            SearchStatusText = "Готово к формированию отчета.";
         }
 
         public RelayCommand GenerateCommand => GetCommand(async o =>
         {
             Progress = true;
+            SearchStatusText = "Проверяю matcher-сервер...";
 
-            string usedModel = string.Empty;
-            switch (SelectedAlgorithm)
+            try
             {
-                case Algorithm.TfIdf:
-                    usedModel = string.Empty;
-                    break;
-                case Algorithm.FastText:
-                    if (_fastTextModelPath is null)
-                    {
-                        Progress = false;
-                        MessageBox.Show("Не выбрана модель");
-                        return;
-                    }
-                    else
-                    {
-                        usedModel = _fastTextModelPath;
-                    }
-                    break;
-                case Algorithm.WordTwoVec:
-                    if (_wordTwoVecModelPath is null)
-                    {
-                        Progress = false;
-                        MessageBox.Show("Не выбрана модель");
-                        return;
-                    }
-                    else
-                    {
-                        usedModel = _wordTwoVecModelPath;
-                    }
-                    break;
-            }
-
-            List<string> usedSources = [];
-            foreach (var config in AvailableDatabasesConfig)
-            {
-                if (config.IsChecked)
+                var serverResult = await _apiService.EnsureMatcherServerAvailableAsync();
+                if (!serverResult.IsSuccess)
                 {
-                    usedSources.Add(config.FullName);
+                    SearchStatusText = "Matcher-сервер недоступен.";
+                    MessageBox.Show(serverResult.ErrorMessage);
+                    return;
                 }
-            }
-            RequestMatcher request = new("127.0.0.1", GlobalConfig.MatcherPort, RequestText, SelectedAlgorithm, FilteringCvss, usedModel, usedSources);
 
-            var result = await _apiService.SendRequestAsync<ResponseMatcher>(request);
-            if (!result.IsSuccess)
+                var usedModel = GetSelectedModelPathForReport();
+                if (usedModel is null)
+                {
+                    return;
+                }
+
+                var matcherModelPath = usedModel;
+                if (!string.IsNullOrWhiteSpace(usedModel) && SelectedAlgorithm != Algorithm.TfIdf)
+                {
+                    var matcherModelPathResult = _apiService.PrepareMatcherModelPath(usedModel);
+                    if (!matcherModelPathResult.IsSuccess)
+                    {
+                        SearchStatusText = "Не удалось подготовить модель для matcher.";
+                        MessageBox.Show(matcherModelPathResult.ErrorMessage);
+                        return;
+                    }
+
+                    matcherModelPath = matcherModelPathResult.Value;
+                }
+
+                var usedSources = AvailableDatabasesConfig
+                    .Where(config => config.IsChecked)
+                    .Select(config => config.FullName)
+                    .ToList();
+
+                if (usedSources.Count == 0)
+                {
+                    SearchStatusText = "Не выбраны источники знаний.";
+                    MessageBox.Show("Выбери хотя бы один источник знаний в настройках поиска.");
+                    return;
+                }
+
+                var matcherSourcePathsResult = _apiService.PrepareMatcherSourcePaths(usedSources);
+                if (!matcherSourcePathsResult.IsSuccess)
+                {
+                    SearchStatusText = "Не удалось подготовить источники знаний для matcher.";
+                    MessageBox.Show(matcherSourcePathsResult.ErrorMessage);
+                    return;
+                }
+
+                var sourcePathMap = matcherSourcePathsResult.Value;
+                var matcherUsedSources = sourcePathMap.Values.ToList();
+                var originalSourcePathByMatcherPath = sourcePathMap.ToDictionary(
+                    pair => pair.Value,
+                    pair => pair.Key,
+                    StringComparer.OrdinalIgnoreCase);
+
+                SearchStatusText = "Отправляю запрос на сопоставление...";
+                RequestMatcher request = new(
+                    "127.0.0.1",
+                    GlobalConfig.MatcherPort,
+                    RequestText,
+                    SelectedAlgorithm,
+                    FilteringCvss,
+                    matcherModelPath,
+                    matcherUsedSources);
+
+                var result = await _apiService.SendRequestAsync<ResponseMatcher>(request);
+                if (!result.IsSuccess)
+                {
+                    SearchStatusText = "Ошибка формирования отчета.";
+                    MessageBox.Show(result.ErrorMessage);
+                    return;
+                }
+
+                var matcherObjects = result.Value?.MatcherObjects;
+                if (matcherObjects is null || matcherObjects.Count == 0)
+                {
+                    SearchStatusText = "Matcher не нашел подходящие записи.";
+                    MessageBox.Show("По заданному описанию matcher не вернул подходящие записи. Попробуй изменить описание или выбрать другие источники знаний.");
+                    return;
+                }
+
+                NormalizeMatcherSourcePaths(matcherObjects, originalSourcePathByMatcherPath);
+
+                var reports = GetReports(matcherObjects);
+                if (reports is null || reports.Count == 0)
+                {
+                    SearchStatusText = "Не удалось собрать отчет из найденных записей.";
+                    MessageBox.Show("Matcher вернул ссылки на записи, но программа не смогла сопоставить их с загруженными базами данных.");
+                    return;
+                }
+
+                Reports.Clear();
+                foreach (var report in reports)
+                {
+                    Reports.Add(report);
+                }
+
+                SearchStatusText = $"Отчет сформирован. Вариантов: {Reports.Count}.";
+                ReportVisibility = Visibility.Visible;
+            }
+            catch (OperationCanceledException ex)
             {
-                Progress = false;
-                MessageBox.Show(result.ErrorMessage);
+                SearchStatusText = "Формирование отчета отменено.";
+                MessageBox.Show(ex.Message);
                 return;
             }
-
-            var reports = GetReports(result.Value.MatcherObjects);
-            if (reports is null)
+            catch (Exception ex)
+            {
+                SearchStatusText = "Ошибка формирования отчета.";
+                MessageBox.Show(ex.Message);
+            }
+            finally
             {
                 Progress = false;
-                return;
             }
-
-            Reports.Clear();
-            foreach (var report in reports)
-            {
-                Reports.Add(report);
-            }
-
-            Progress = false;
-            ReportVisibility = Visibility.Visible;
-        }, o => RequestText != string.Empty && RequestText is not null && SelectedSpecialist is not null && SelectedProtectionMeasures is not null
+        }, o => !Progress && RequestText != string.Empty && RequestText is not null && SelectedSpecialist is not null && SelectedProtectionMeasures is not null
                     && SelectedConsequence is not null && SelectedTechnology is not null);
 
         public RelayCommand SaveReportCommand => GetCommand(async o =>
         {
             var savePath = DialogService.SaveFileDialog($"Рапорт от {DateTime.Now:D}", DialogService.WordFilter);
+
+            if (string.IsNullOrWhiteSpace(savePath))
+            {
+                SearchStatusText = "Сохранение отчета отменено.";
+                return;
+            }
+
             Progress = true;
+            SearchStatusText = "Сохраняю отчет в Word...";
+
             try
             {
                 using var doc = DocX.Create(savePath, DocumentTypes.Document);
                 await Task.Run(() => ReportWorker.CreateReport(doc, SelectedReport));
                 doc.Save();
+                SearchStatusText = $"Отчет сохранен: {savePath}";
             }
             catch (Exception ex)
             {
+                SearchStatusText = "Ошибка сохранения отчета.";
                 MessageBox.Show(ex.Message);
             }
-            Progress = false;
+            finally
+            {
+                Progress = false;
+            }
         }, o => SelectedReport is not null);
+
+        private string? GetSelectedModelPathForReport()
+        {
+            switch (SelectedAlgorithm)
+            {
+                case Algorithm.TfIdf:
+                    return string.Empty;
+
+                case Algorithm.FastText:
+                    if (string.IsNullOrWhiteSpace(_fastTextModelPath))
+                    {
+                        SearchStatusText = "Не выбрана FastText-модель.";
+                        MessageBox.Show("Для алгоритма FastText выбери используемую модель во вкладке «Работа с моделями».");
+                        return null;
+                    }
+
+                    if (!File.Exists(_fastTextModelPath))
+                    {
+                        SearchStatusText = "Файл FastText-модели не найден.";
+                        MessageBox.Show($"Файл FastText-модели не найден:{Environment.NewLine}{_fastTextModelPath}");
+                        return null;
+                    }
+
+                    return _fastTextModelPath;
+
+                case Algorithm.WordTwoVec:
+                    if (string.IsNullOrWhiteSpace(_wordTwoVecModelPath))
+                    {
+                        SearchStatusText = "Не выбрана Word2Vec-модель.";
+                        MessageBox.Show("Для алгоритма Word2Vec выбери используемую модель во вкладке «Работа с моделями».");
+                        return null;
+                    }
+
+                    if (!File.Exists(_wordTwoVecModelPath))
+                    {
+                        SearchStatusText = "Файл Word2Vec-модели не найден.";
+                        MessageBox.Show($"Файл Word2Vec-модели не найден:{Environment.NewLine}{_wordTwoVecModelPath}");
+                        return null;
+                    }
+
+                    return _wordTwoVecModelPath;
+
+                default:
+                    SearchStatusText = "Не выбран алгоритм поиска.";
+                    MessageBox.Show("Выбери алгоритм поиска в настройках.");
+                    return null;
+            }
+        }
 
         public RelayCommand SettingSearchCommand => GetCommand(o =>
         {
@@ -175,6 +293,22 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 System.Diagnostics.Process.Start("notepad.exe", fullPath);
             }
         });
+
+        private static void NormalizeMatcherSourcePaths(
+            ObservableCollection<ResponseMatcher.MatcherObject> responseMatchers,
+            IReadOnlyDictionary<string, string> originalSourcePathByMatcherPath)
+        {
+            foreach (var responseMatcher in responseMatchers)
+            {
+                foreach (var source in responseMatcher.Sources.ToList())
+                {
+                    if (originalSourcePathByMatcherPath.TryGetValue(source.Value, out var originalPath))
+                    {
+                        responseMatcher.Sources[source.Key] = originalPath;
+                    }
+                }
+            }
+        }
 
         public ObservableCollection<Report>? GetReports(ObservableCollection<ResponseMatcher.MatcherObject> responseMatchers)
         {
@@ -210,6 +344,11 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                         if (item.Key == source.Value)
                         {
                             var config = AvailableDatabasesConfig.FirstOrDefault(path => path.FullName == item.Key);
+                            if (config is null)
+                            {
+                                break;
+                            }
+
                             switch (config.DetectedType)
                             {
                                 case DataType.VulnerabilitiesFstec:

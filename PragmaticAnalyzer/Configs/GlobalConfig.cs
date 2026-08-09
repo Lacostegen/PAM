@@ -15,15 +15,13 @@ namespace PragmaticAnalyzer.Configs
         public static readonly string ModelsPath = Path.Combine(Environment.CurrentDirectory, "Models");
         public static readonly string ConfigPath = Path.Combine(Environment.CurrentDirectory, "Config");
         public static readonly string ResourcePath = Path.Combine(Environment.CurrentDirectory, "Resource");
+
+        //
+        public static readonly string RagConfigPath = Path.Combine(Environment.CurrentDirectory, "Config", "ragConfig.json");
         //
         // Сводка:
         //     Пути к сторонним исполняемым файлам.
         public static readonly string MatcherPath = Path.Combine(Environment.CurrentDirectory, "matcher.exe");
-        public static readonly string TranslatorPath = Path.Combine(Environment.CurrentDirectory, "Translator", "koboldcpp.exe");
-        //
-        // Сводка:
-        //     Пути к моделям переводчика.
-        public static readonly string TranslatorYandexModelPath = Path.Combine(Environment.CurrentDirectory, "Translator", "Qwen3.5-9B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf");
         //
         // Сводка:
         //     Пути к конфигурационным файлам.
@@ -60,20 +58,19 @@ namespace PragmaticAnalyzer.Configs
         // Сводка:
         //     Пути к информационным ресурсам.
         public static readonly string LinkOne = "https://fasttext.cc/";
-        public static readonly string LinkTwo = Path.Combine(ResourcePath, "linkTwo.pdf");
-        public static readonly string LinkThree = Path.Combine(ResourcePath, "linkThree.pdf");
-        public static readonly string LinkFour = Path.Combine(ResourcePath, "linkFour.pdf");
-        public static readonly string LinkFive = Path.Combine(ResourcePath, "linkFive.pdf");
-        public static readonly string LinkSix = Path.Combine(ResourcePath, "linkSix.pdf");
-        public static readonly string LinkSeven = Path.Combine(ResourcePath, "linkSeven.pdf");
-        public static readonly string LinkEight = Path.Combine(ResourcePath, "linkEight.pdf");
-        public static readonly string LinkNine = Path.Combine(ResourcePath, "linkNine.pdf");
-        public static readonly string LinkTen = Path.Combine(ResourcePath, "linkTen.pdf");
-        public static readonly string LinkEleven = Path.Combine(ResourcePath, "linkEleven.pdf");
+        public static readonly string LinkTwo = Path.Combine(ResourcePath, "Word2Vec", "vectorization.pdf");
+        public static readonly string LinkThree = Path.Combine(ResourcePath, "Word2Vec", "preprocessing.pdf");
+        public static readonly string LinkFour = Path.Combine(ResourcePath, "Word2Vec", "word2vec.pdf");
+        public static readonly string LinkFive = Path.Combine(ResourcePath, "Word2Vec", "word2vec.pdf");
+        public static readonly string LinkSix = Path.Combine(ResourcePath, "Word2Vec", "softmax.pdf");
+        public static readonly string LinkSeven = Path.Combine(ResourcePath, "Word2Vec", "backpropagation.pdf");
+        public static readonly string LinkEight = Path.Combine(ResourcePath, "Word2Vec", "cosine-similarity.pdf");
+        public static readonly string LinkNine = Path.Combine(ResourcePath, "Word2Vec", "euclidean-distance.pdf");
+        public static readonly string LinkTen = Path.Combine(ResourcePath, "Word2Vec", "word2vec.pdf");
+        public static readonly string LinkEleven = Path.Combine(ResourcePath, "TfIdf", "habr.pdf");
         //
         //Сводка:
         //  Порты серверов
         public static readonly string MatcherPort = "5000";
-        public static readonly string TranslatorPort = "5001";
     }
 }

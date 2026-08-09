@@ -4,8 +4,9 @@ using PragmaticAnalyzer.Core;
 using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
 using PragmaticAnalyzer.MVVM.Model;
+using PragmaticAnalyzer.MVVM.ViewModel.Main;
 using PragmaticAnalyzer.Services;
-using PragmaticAnalyzer.WorkingServer.Translate;
+using PragmaticAnalyzer.Services.LocalLlama;
 using System.Collections.ObjectModel;
 using System.Net.Http;
 
@@ -13,7 +14,6 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
 {
     public class VulnerabilitieViewModel : ViewModelBase
     {
-        private readonly IApiService _apiService;
         private readonly IFileService _fileService;
         private readonly VulnerabilityModel _model;
         private readonly Func<string, DataType, Task> UpdateConfig;
@@ -26,6 +26,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         private HashSet<Guid> _vulNvdHashSet;
         public object? CurrentView { get => Get<object>(); private set => Set(value); }
         public ObservableCollection<object> DisplayedVulnerabilities { get; private set; } = [];
+        public LocalDatabaseSearchViewModel LocalSearch { get; }
         public ObservableCollection<VulnerabilitieFstec> VulnerabilitiesFstec { get; } = [];
         public ObservableCollection<VulnerabilitieNvd> VulnerabilitiesNvd { get; } = [];
         public ObservableCollection<VulnerabilitieJvn> VulnerabilitiesJvn { get; } = [];
@@ -113,9 +114,13 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         public string? Status { get => Get<string>(); set => Set(value); }
         public bool Progress { get => Get<bool>(); set => Set(value); }
 
-        public VulnerabilitieViewModel(Func<string, DataType, Task> updateConfig, VulConfig vulConfig, HashSet<Guid> vulJvnHashSet, HashSet<Guid> vulNvdHashSet)
+        public VulnerabilitieViewModel(
+            Func<string, DataType, Task> updateConfig,
+            VulConfig vulConfig,
+            HashSet<Guid> vulJvnHashSet,
+            HashSet<Guid> vulNvdHashSet,
+            Action<object> setCurrentView)
         {
-            _apiService = new ApiService();
             _fileService = new FileService();
             _config = vulConfig;
             _vulJvnHashSet = vulJvnHashSet;
@@ -125,6 +130,11 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
             CurrentView = _fstecVm;
             UpdateConfig = updateConfig;
             Progress = false;
+            LocalSearch = new(
+                "Поиск только по выбранной БД уязвимостей",
+                GetSearchSources,
+                this,
+                setCurrentView);
             NamesDatabases =
             [
                 DataType.VulnerabilitiesFstec,
@@ -134,6 +144,38 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
                 DataType.VulnerabilitiesJvnTranslated,
                 //DataType.VulnerabilitiesExtended
             ];
+            SelectedDatabase = DataType.VulnerabilitiesFstec;
+        }
+
+        private IEnumerable<DatabaseSearchSource> GetSearchSources()
+        {
+            yield return new($"БД уязвимостей: {GetSelectedDatabaseName()}", GetSelectedDatabaseItems());
+        }
+
+        private IEnumerable<object> GetSelectedDatabaseItems()
+        {
+            return SelectedDatabase switch
+            {
+                DataType.VulnerabilitiesFstec => VulnerabilitiesFstec,
+                DataType.VulnerabilitiesNvd => VulnerabilitiesNvd,
+                DataType.VulnerabilitiesNvdTranslated => VulnerabilitiesNvdTranslated,
+                DataType.VulnerabilitiesJvn => VulnerabilitiesJvn,
+                DataType.VulnerabilitiesJvnTranslated => VulnerabilitiesJvnTranslated,
+                _ => DisplayedVulnerabilities
+            };
+        }
+
+        private string GetSelectedDatabaseName()
+        {
+            return SelectedDatabase switch
+            {
+                DataType.VulnerabilitiesFstec => "ФСТЭК",
+                DataType.VulnerabilitiesNvd => "NVD",
+                DataType.VulnerabilitiesNvdTranslated => "Русифицированная NVD",
+                DataType.VulnerabilitiesJvn => "JVN",
+                DataType.VulnerabilitiesJvnTranslated => "Русифицированная JVN",
+                _ => "выбранная база"
+            };
         }
 
         public RelayCommand UpdateCommand => GetCommand(async o =>
@@ -190,12 +232,13 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
                             if (_vulNvdHashSet.Contains(vul.GuidId))
                                 continue;
 
-                            Status += "\n\n" + $"Обращение к серверу (127.0.0.1:{GlobalConfig.TranslatorPort})";
-                            RequestTranslate request = new("127.0.0.1", GlobalConfig.TranslatorPort, vul.Description);
-                            var response = await _apiService.SendRequestAsync<ResponseTranslate>(request, _updateCancellationTokenSource.Token, 1000);
-                            if (response.IsSuccess)
+                            Status += "\n\n" + "Перевод через локальную GGUF-модель";
+                            var translatedText = await TranslateDescriptionAsync(
+                                vul.Description,
+                                _updateCancellationTokenSource.Token);
+
+                            if (!string.IsNullOrWhiteSpace(translatedText))
                             {
-                                var translatedText = response.Value.Results[0].Text;
                                 var translatedVul = vul.Clone();
                                 translatedVul.Description = translatedText;
                                 VulnerabilitiesNvdTranslated.Add(translatedVul);
@@ -206,7 +249,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
                             }
                             else
                             {
-                                Status += "\n\n" + $"{response.ErrorMessage})";
+                                Status += "\n\n" + "Модель вернула пустой перевод";
                             }
                         }
                         break;
@@ -216,12 +259,13 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
                             if (_vulJvnHashSet.Contains(vul.GuidId))
                                 continue;
 
-                            Status += "\n\n" + $"Обращение к серверу (127.0.0.1:{GlobalConfig.TranslatorPort})";
-                            RequestTranslate request = new("127.0.0.1", GlobalConfig.TranslatorPort, vul.Description);
-                            var response = await _apiService.SendRequestAsync<ResponseTranslate>(request, _updateCancellationTokenSource.Token, 1000);
-                            if (response.IsSuccess)
+                            Status += "\n\n" + "Перевод через локальную GGUF-модель";
+                            var translatedText = await TranslateDescriptionAsync(
+                                vul.Description,
+                                _updateCancellationTokenSource.Token);
+
+                            if (!string.IsNullOrWhiteSpace(translatedText))
                             {
-                                var translatedText = response.Value.Results[0].Text;
                                 var translatedVul = vul.Clone();
                                 translatedVul.Description = translatedText;
                                 VulnerabilitiesJvnTranslated.Add(translatedVul);
@@ -254,6 +298,47 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
                 _updateCancellationTokenSource?.Dispose();
                 _updateCancellationTokenSource = null;
             }
+        }
+
+        private async Task<string> TranslateDescriptionAsync(
+            string? text,
+            CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return string.Empty;
+            }
+
+            var config = await _fileService.LoadFileToPathAsync<TranslatorConfig>(
+                GlobalConfig.TranslatorConfigPath,
+                ct) ?? new TranslatorConfig();
+
+            await InfrastructureOrchestrator.EnsureLocalLlamaLoadedAsync(
+                config.ContextSize,
+                config.GpuLayerCount,
+                config.ThreadCount,
+                config.BatchSize,
+                config.MicroBatchSize,
+                config.ReadinessProbeMaxTokens,
+                ct);
+
+            var messages = new[]
+            {
+                new LocalLlamaChatMessage(
+                    "system",
+                    "Ты технический переводчик. Переводи текст на русский язык точно, без добавления фактов. Сохраняй CVE, BDU, версии, названия продуктов и технические идентификаторы без изменений."),
+                new LocalLlamaChatMessage(
+                    "user",
+                    $"Переведи на русский язык следующий текст:\n{text.Trim()}")
+            };
+
+            return await InfrastructureOrchestrator.LocalLlamaService.GenerateAsync(
+                messages,
+                Math.Clamp(config.MaxTokens, 300, 1000),
+                0.1f,
+                0.9f,
+                1.05f,
+                ct);
         }
     }
 }

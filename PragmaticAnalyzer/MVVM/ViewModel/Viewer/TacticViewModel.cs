@@ -1,6 +1,7 @@
 ﻿using PragmaticAnalyzer.Core;
 using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
+using PragmaticAnalyzer.MVVM.ViewModel.Main;
 using PragmaticAnalyzer.MVVM.Views.Viewer;
 using System.Collections.ObjectModel;
 
@@ -12,14 +13,29 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         private readonly Action<IEntityTit> Change;
         private readonly Func<string, DataType, Task> UpdateConfig;
         public ObservableCollection<Tactic> Tactics { get; set; }
+        public LocalDatabaseSearchViewModel LocalSearch { get; }
         public IEntityTit? SelectedItem { get => Get<IEntityTit>(); set => Set(value); }
 
-        public TacticViewModel(ObservableCollection<Tactic> tactics, Func<string, DataType, Task> updateConfig)
+        public TacticViewModel(
+            ObservableCollection<Tactic> tactics,
+            Func<string, DataType, Task> updateConfig,
+            Action<object> setCurrentView)
         {
             Tactics = tactics;
+            LocalSearch = new(
+                "Поиск только по БД техник и тактик",
+                GetSearchSources,
+                this,
+                setCurrentView);
             Add += OnAdd;
             Change += OnChange;
             UpdateConfig += updateConfig;
+        }
+
+        private IEnumerable<DatabaseSearchSource> GetSearchSources()
+        {
+            yield return new("БД техник и тактик: тактики", Tactics);
+            yield return new("БД техник и тактик: техники", Tactics.SelectMany(tactic => tactic.Techniques ?? []));
         }
 
         public RelayCommand AddCommand => GetCommand(o =>

@@ -32,6 +32,12 @@
                    Text="Условное обозначение:"
                    Style="{StaticResource MainTextBlockStyle}" />
 
+        <ContentControl Grid.Row="0"
+                        Grid.Column="1"
+                        Content="{Binding LocalSearch}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center" />
+
         <ListBox Grid.Row="1"
                  Grid.Column="0"
                  ItemsSource="{Binding ProtectionMeasures}"

@@ -1,0 +1,85 @@
+<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.DatabaseSearchResultsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:cc="clr-namespace:PragmaticAnalyzer.CastomControls"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             d:DataContext="{d:DesignInstance Type=vm:DatabaseSearchResultsViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="640"
+             d:DesignWidth="1200">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0"
+              Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="0"
+                    Content="Назад"
+                    Style="{StaticResource OutlinedGrayButtonStyle}"
+                    Command="{Binding BackCommand}" />
+
+            <TextBlock Grid.Column="1"
+                       Text="Результаты поиска по базам данных"
+                       FontSize="26"
+                       FontWeight="Bold"
+                       FontFamily="Consolas"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Center" />
+        </Grid>
+
+        <TextBlock Grid.Row="1"
+                   Text="{Binding Summary}"
+                   Style="{StaticResource MainTextBlockStyle}"
+                   TextWrapping="Wrap"
+                   Margin="10,0,10,5" />
+
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl ItemsSource="{Binding Results}"
+                          Margin="5">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border BorderBrush="Black"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Margin="5"
+                                Padding="10"
+                                Background="White">
+                            <StackPanel>
+                                <TextBlock Text="{Binding DatabaseName}"
+                                           FontWeight="Bold"
+                                           FontSize="16"
+                                           FontFamily="Consolas"
+                                           TextWrapping="Wrap" />
+
+                                <Button Content="{Binding Title}"
+                                        Style="{StaticResource HyperlinkButtonStyle}"
+                                        Command="{Binding DataContext.OpenResultCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}"
+                                        FontSize="18"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,6,0,4" />
+
+                                <cc:HighlightedTextBlock Text="{Binding Snippet}"
+                                                         Segments="{Binding HighlightedSnippetSegments}"
+                                                         FontSize="15"
+                                                         FontFamily="Consolas"
+                                                         TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

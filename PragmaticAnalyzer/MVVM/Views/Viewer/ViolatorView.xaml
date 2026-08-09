@@ -9,7 +9,8 @@
              d:DataContext="{d:DesignInstance Type=vmViewer:ViolatorViewModel}"
              mc:Ignorable="d"
              d:DesignHeight="500"
-             d:DesignWidth="800">
+             d:DesignWidth="800"
+             Loaded="ViolatorView_Loaded">
 
     <UserControl.Resources>
         <assist:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
@@ -53,6 +54,7 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="70" />
         </Grid.RowDefinitions>
@@ -64,7 +66,14 @@
         </Grid.ColumnDefinitions>
 
         <!-- Левая часть: кнопка схемы + список нарушителей -->
-        <Grid Grid.Row="0"
+        <ContentControl Grid.Row="0"
+                        Grid.ColumnSpan="3"
+                        Content="{Binding LocalSearch}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,4,4" />
+
+        <Grid Grid.Row="1"
               Grid.Column="0"
               Margin="5,5,5,5">
             <Grid.RowDefinitions>
@@ -85,7 +94,8 @@
                     Padding="6,4"
                     Click="ToggleSchemeButton_Click" />
 
-            <ListBox Grid.Row="2"
+            <ListBox x:Name="ViolatorIdentifiersListBox"
+                     Grid.Row="2"
                      ItemsSource="{Binding Violators}"
                      SelectedItem="{Binding SelectedViolator}"
                      Style="{StaticResource RoundedListBoxStyle}"
@@ -103,7 +113,7 @@
         </Grid>
 
         <!-- Правая часть: карточка нарушителя или схема -->
-        <Border Grid.Row="0"
+        <Border Grid.Row="1"
                 Grid.Column="1"
                 Margin="5,5,5,5"
                 BorderBrush="Black"
@@ -177,32 +187,39 @@
                                 Click="ResetSchemeZoomButton_Click" />
                     </DockPanel>
 
-                    <ScrollViewer x:Name="SchemeScrollViewer"
-                                  Grid.Row="1"
-                                  Margin="8,10,8,6"
-                                  VerticalScrollBarVisibility="Auto"
-                                  HorizontalScrollBarVisibility="Auto"
-                                  Background="White"
-                                  PreviewMouseWheel="SchemeScrollViewer_PreviewMouseWheel">
-                        <Grid x:Name="SchemeZoomRoot"
-                              Width="1777"
-                              Height="919"
-                              RenderOptions.BitmapScalingMode="HighQuality">
-                            <Grid.LayoutTransform>
-                                <ScaleTransform x:Name="SchemeScaleTransform"
-                                                ScaleX="1"
-                                                ScaleY="1"
-                                                d:ScaleX="0.35"
-                                                d:ScaleY="0.35" />
-                            </Grid.LayoutTransform>
+                    <Grid Grid.Row="1"
+                          Margin="8,10,8,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="320" />
+                        </Grid.ColumnDefinitions>
 
-                            <Image Source="/Images/ViolatorModelScheme.png"
-                                   Width="1777"
-                                   Height="919"
-                                   Stretch="Fill" Margin="13,2,-13,-2" />
+                        <ScrollViewer x:Name="SchemeScrollViewer"
+                                      Grid.Column="0"
+                                      Margin="0,0,8,0"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      Background="White"
+                                      PreviewMouseWheel="SchemeScrollViewer_PreviewMouseWheel">
+                            <Grid x:Name="SchemeZoomRoot"
+                                  Width="1777"
+                                  Height="919"
+                                  RenderOptions.BitmapScalingMode="HighQuality">
+                                <Grid.LayoutTransform>
+                                    <ScaleTransform x:Name="SchemeScaleTransform"
+                                                    ScaleX="1"
+                                                    ScaleY="1"
+                                                    d:ScaleX="0.35"
+                                                    d:ScaleY="0.35" />
+                                </Grid.LayoutTransform>
 
-                            <Canvas Width="1777"
-                                    Height="919">
+                                <Image Source="/Images/ViolatorModelScheme.png"
+                                       Width="1777"
+                                       Height="919"
+                                       Stretch="Fill" Margin="13,2,-13,-2" />
+
+                                <Canvas Width="1777"
+                                        Height="919">
                                 <!-- Левая красная группа -->
                                 <Button Style="{StaticResource SchemeHotspotButtonStyle}" Canvas.Left="30" Canvas.Top="9" Width="105" Height="84" ToolTip="Подрядчики" Tag="Подрядчики" Click="SchemeNodeButton_Click" HorizontalAlignment="Left" VerticalAlignment="Center" />
                                 <Button Style="{StaticResource SchemeHotspotButtonStyle}" Canvas.Left="171" Canvas.Top="10" Width="106" Height="85" ToolTip="Корпоративные группы" Tag="Корпоративные группы" Click="SchemeNodeButton_Click" RenderTransformOrigin="0.496,0.505" HorizontalAlignment="Left" VerticalAlignment="Top" />
@@ -301,17 +318,54 @@
                                         </TransformGroup>
                                     </Button.RenderTransform>
                                 </Button>
-                            </Canvas>
-                        </Grid>
-                    </ScrollViewer>
+                                </Canvas>
+                            </Grid>
+                        </ScrollViewer>
+
+                        <Border Grid.Column="1"
+                                Padding="12"
+                                BorderBrush="#BDBDBD"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Background="#FAFAFA">
+                            <DockPanel LastChildFill="True">
+                                <TextBlock DockPanel.Dock="Top"
+                                           Text="Информация по выбранному блоку"
+                                           FontWeight="Bold"
+                                           FontSize="15"
+                                           Margin="0,0,0,10"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock x:Name="SchemeNodeInfoTitle"
+                                           DockPanel.Dock="Top"
+                                           Text="Выберите блок схемы"
+                                           FontWeight="SemiBold"
+                                           FontSize="14"
+                                           Foreground="#1F4E79"
+                                           Margin="0,0,0,8"
+                                           TextWrapping="Wrap" />
+
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <TextBlock x:Name="SchemeNodeInfoDescription"
+                                               Text="Нажмите на любой блок схемы модели нарушителей, чтобы увидеть его пояснение и роль в модели."
+                                               FontSize="13"
+                                               Foreground="#333"
+                                               TextWrapping="Wrap" />
+                                </ScrollViewer>
+                            </DockPanel>
+                        </Border>
+                    </Grid>
                 </Grid>
             </Grid>
         </Border>
 
-        <StackPanel Grid.Row="1"
+        <StackPanel Grid.Row="2"
                     Grid.ColumnSpan="2"
                     Orientation="Horizontal"
-                    HorizontalAlignment="Left" Grid.Column="1" Margin="106,0,0,0">
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Grid.Column="1"
+                    Margin="106,0,0,0">
             <Button Style="{StaticResource OutlinedGrayButtonStyle}"
                     Content="Добавить"
                     Command="{Binding AddCommand}" />

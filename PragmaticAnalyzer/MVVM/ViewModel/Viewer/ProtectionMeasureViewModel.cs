@@ -1,6 +1,7 @@
 ﻿using PragmaticAnalyzer.Core;
 using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
+using PragmaticAnalyzer.MVVM.ViewModel.Main;
 using PragmaticAnalyzer.MVVM.Views.Viewer;
 using System.Collections.ObjectModel;
 
@@ -14,13 +15,22 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Viewer
         private Action<ProtectionMeasure> Change;
 
         public ObservableCollection<ProtectionMeasure> ProtectionMeasures { get; set; }
+        public LocalDatabaseSearchViewModel LocalSearch { get; }
         public ProtectionMeasure? SelectedProtectionMeasure { get => Get<ProtectionMeasure?>(); set => Set(value); }
 
-        public ProtectionMeasureViewModel(ObservableCollection<ProtectionMeasure> protectionMeasures, Func<string, DataType, Task> updateConfig)
+        public ProtectionMeasureViewModel(
+            ObservableCollection<ProtectionMeasure> protectionMeasures,
+            Func<string, DataType, Task> updateConfig,
+            Action<object> setCurrentView)
         {
             Add += OnAdd;
             Change += OnChange;
             ProtectionMeasures = protectionMeasures;
+            LocalSearch = new(
+                "Поиск только по БД мер защиты",
+                () => [new DatabaseSearchSource("БД мер защиты", ProtectionMeasures)],
+                this,
+                setCurrentView);
             UpdateConfig += updateConfig;
         }
 

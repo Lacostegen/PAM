@@ -1,0 +1,82 @@
+<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.DatabaseLocalSearchBarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
+             d:DataContext="{d:DesignInstance Type=vm:LocalDatabaseSearchViewModel}"
+             mc:Ignorable="d"
+             d:DesignHeight="32"
+             d:DesignWidth="340">
+    <StackPanel Orientation="Horizontal"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Margin="4,0">
+        <Border Width="250"
+                Height="28"
+                Background="White"
+                BorderBrush="Black"
+                BorderThickness="1"
+                CornerRadius="6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox Grid.Column="0"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         Padding="7,3"
+                         FontSize="12"
+                         FontFamily="Consolas"
+                         VerticalContentAlignment="Center"
+                         AcceptsReturn="False"
+                         TextWrapping="NoWrap"
+                         VerticalScrollBarVisibility="Disabled"
+                         ToolTip="{Binding Placeholder}"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Grid.Column="1"
+                        BorderThickness="1,0,0,0"
+                        BorderBrush="Black"
+                        Background="White"
+                        Padding="0"
+                        FontSize="13"
+                        FontFamily="Consolas"
+                        ToolTip="{Binding SelectedSearchMode}"
+                        Click="SearchModeButton_Click">
+                    <TextBlock Text="⚙"
+                               FontFamily="Segoe UI Symbol"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                    <Button.ContextMenu>
+                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                            <MenuItem Header="Содержит текст"
+                                      Command="{Binding SetSearchModeCommand}"
+                                      CommandParameter="Содержит текст" />
+                            <MenuItem Header="Слово целиком"
+                                      Command="{Binding SetSearchModeCommand}"
+                                      CommandParameter="Слово целиком" />
+                            <MenuItem Header="Все слова"
+                                      Command="{Binding SetSearchModeCommand}"
+                                      CommandParameter="Все слова" />
+                            <MenuItem Header="Любое слово"
+                                      Command="{Binding SetSearchModeCommand}"
+                                      CommandParameter="Любое слово" />
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Button Content="Найти"
+                Width="66"
+                Height="28"
+                Margin="4,0,0,0"
+                Padding="4,2"
+                FontSize="12"
+                Style="{StaticResource OutlinedGrayButtonStyle}"
+                Command="{Binding FindCommand}" />
+    </StackPanel>
+</UserControl>

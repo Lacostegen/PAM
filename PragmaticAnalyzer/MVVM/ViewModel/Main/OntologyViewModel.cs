@@ -25,22 +25,24 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         {  
             Ontologys = ontologys;
             _fileService = new FileService();
-            IsEnabledCheckBox = true;
+            IsEnabledCheckBox = false;
         }
 
         public RelayCommand LoadCommand => GetCommand(async o =>
         {
             var path = DialogService.OpenFileDialog(DialogService.JsonFilter);
-            if (path is null) return;
+            if (string.IsNullOrWhiteSpace(path)) return;
             var ontology = await _fileService.LoadDTOAsync<Ontology>(path, DataType.Ontology);
             if (ontology is null) return;
+            ontology.Entities ??= [];
             Ontologys.Add(ontology);
             await _fileService.SaveDTOAsync(Ontologys, DataType.Ontology, GlobalConfig.OntologyPath);
         }); // обработчик нажатия на кнопку "Загрузить" на OntologyView
 
         public RelayCommand AddCommand => GetCommand(o =>
         {
-            IsEnabledCheckBox = true;
+            IsEnabledCheckBox = SelectedItem is Ontology;
+            AddNewEntity = false;
             IsAdd = true;
             _manager = new(this);
             _manager.ShowDialog();
@@ -48,18 +50,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
         public RelayCommand ChangeCommand => GetCommand(o =>
         {
+            if (SelectedItem is null) return;
             IsEnabledCheckBox = false;
+            AddNewEntity = false;
             IsAdd = false;
-            if (SelectedItem is Ontology)
-            {
-                EnteredName = SelectedItem.Name;
-                EnteredDescription = SelectedItem.Description;
-            }
-            else if (SelectedItem is Entitie)
-            {
-                EnteredName = SelectedItem.Name;
-                EnteredDescription = SelectedItem.Description;
-            }
+            EnteredName = SelectedItem.Name;
+            EnteredDescription = SelectedItem.Description;
             _manager = new(this);
             _manager.ShowDialog();
         }, o => Ontologys.Count != 0 && SelectedItem is not null); // обработчик нажатия на кнопку "Изменить" на OntologyView
@@ -72,7 +68,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             }
             else if (SelectedItem is Entitie entitie)
             {
-                var parent = Ontologys.FirstOrDefault(o => o.Entities.Contains(entitie));
+                var parent = Ontologys.FirstOrDefault(o => o.Entities?.Contains(entitie) == true);
                 parent?.Entities.Remove(entitie);
             }
             await _fileService.SaveDTOAsync(Ontologys, DataType.Ontology, GlobalConfig.OntologyPath);
@@ -81,30 +77,52 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
         public RelayCommand ApplyCommand => GetCommand(async o =>
         {
+            var enteredName = EnteredName?.Trim();
+            var enteredDescription = EnteredDescription?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(enteredName))
+            {
+                System.Windows.MessageBox.Show("Укажите название.");
+                return;
+            }
+
             if (IsAdd)
             {
-                if (SelectedItem is Ontology ontology && AddNewEntity)
+                if (AddNewEntity)
                 {
+                    if (SelectedItem is not Ontology ontology)
+                    {
+                        System.Windows.MessageBox.Show("Чтобы добавить сущность, выберите онтологию.");
+                        return;
+                    }
+
                     ontology.Entities ??= [];
                     ontology.Entities.Add(new()
                     {
-                        Name = EnteredName,
-                        Description = EnteredDescription
+                        Name = enteredName,
+                        Description = enteredDescription
                     });
                 }
                 else
                 {
                     Ontologys.Add(new()
                     {
-                        Name = EnteredName,
-                        Description = EnteredDescription
+                        Name = enteredName,
+                        Description = enteredDescription,
+                        Entities = []
                     });
                 }
             }
             else
             {
-                SelectedItem.Name = EnteredName;
-                SelectedItem.Description = EnteredDescription;
+                if (SelectedItem is null)
+                {
+                    System.Windows.MessageBox.Show("Выберите элемент для изменения.");
+                    return;
+                }
+
+                SelectedItem.Name = enteredName;
+                SelectedItem.Description = enteredDescription;
             }
             ResetUIManager();
             _manager?.Close();
@@ -121,7 +139,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
         public RelayCommand SelectedItemChangedCommand => GetCommand(selectedItem =>
         {
-            SelectedItem = (IObjectOntology)selectedItem;
+            SelectedItem = selectedItem as IObjectOntology;
         }); // обработчик выбора элемента в TreeView на OntologyView
 
         private void ResetUIManager()
@@ -129,6 +147,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             EnteredName = string.Empty;
             EnteredDescription = string.Empty;
             AddNewEntity = false;
+            IsEnabledCheckBox = false;
         } // сброс полей на OntologyManagerView
     }
 }

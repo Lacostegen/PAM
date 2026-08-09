@@ -41,7 +41,7 @@
                     <TextBlock Text="{Binding Name}"
                                Style="{StaticResource MainTextBlockStyle}"
                                Margin="1"
-                               Width="600" />
+                               TextWrapping="Wrap" />
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
@@ -56,7 +56,7 @@
                 Padding="2"
                 Grid.Column="0"
                 Grid.Row="1"
-                Grid.ColumnSpan="3"
+                Grid.ColumnSpan="2"
                 Margin="5">
             <StackPanel Grid.Column="0"
                         Margin="1"

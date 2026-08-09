@@ -29,10 +29,11 @@
                         Style="{StaticResource OutlinedGrayButtonStyle}" />
             </StackPanel>
           
-            <TextBlock Text="{Binding ValueText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                       FontSize="15"
-                       FontFamily="Consolas"
-                       TextWrapping="Wrap"/>
+            <local:HighlightedTextBlock Text="{Binding ValueText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        Segments="{Binding HighlightedValueSegments, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        FontSize="15"
+                                        FontFamily="Consolas"
+                                        TextWrapping="Wrap" />
         </StackPanel>
     </Border>
 </UserControl>

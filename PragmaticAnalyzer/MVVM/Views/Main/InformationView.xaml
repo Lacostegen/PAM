@@ -52,7 +52,7 @@
                                TextWrapping="Wrap"
                                FontFamily="Consolas"
                                VerticalAlignment="Center"
-                               Text="На этой вкладке вы сможете ознакомиться с информаций о работе алгоритма Fasttext" />
+                               Text="На этой вкладке вы сможете ознакомиться с информацией о работе алгоритма Fasttext" />
                 </Grid>
             </Border>
 
@@ -93,7 +93,7 @@
                                TextWrapping="Wrap"
                                FontFamily="Consolas"
                                VerticalAlignment="Center"
-                               Text="На этой вкладке вы сможете ознакомиться с информаций о работе алгоритма Word2Vec" />
+                               Text="На этой вкладке вы сможете ознакомиться с информацией о работе алгоритма Word2Vec" />
                 </Grid>
             </Border>
 
@@ -134,7 +134,7 @@
                                TextWrapping="Wrap"
                                FontFamily="Consolas"
                                VerticalAlignment="Center"
-                               Text="На этой вкладке вы сможете ознакомиться с информаций о работе алгоритма Tf-Idf" />
+                               Text="На этой вкладке вы сможете ознакомиться с информацией о работе алгоритма Tf-Idf" />
                 </Grid>
             </Border>
         </WrapPanel>

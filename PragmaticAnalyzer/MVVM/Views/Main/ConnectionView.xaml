@@ -52,6 +52,7 @@
                 <RowDefinition Height="2*" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <Grid Grid.Row="0">
@@ -100,6 +101,12 @@
             <ProgressBar Grid.Row="2"
                          Style="{StaticResource RoundedProgressBarStyle}"
                          IsIndeterminate="{Binding Progress}" />
+
+            <TextBlock Grid.Row="3"
+                       Text="{Binding SearchStatusText}"
+                       Margin="8,2,8,6"
+                       Foreground="#555"
+                       TextWrapping="Wrap" />
         </Grid>
 
         <Grid Grid.Row="1"
@@ -471,7 +478,7 @@
                                     DataContext="{Binding Exploit}"
                                     Visibility="{Binding ., Converter={StaticResource NullToVisibilityConverter}}">
                                 <StackPanel>
-                                    <TextBlock Text="Источник знаний: БД Экслойтов"
+                                    <TextBlock Text="Источник знаний: БД Эксплойтов"
                                                Style="{StaticResource MainTextBlockStyle}"
                                                FontWeight="Bold"
                                                FontSize="20" />
@@ -501,22 +508,19 @@
                                         <cc:LabeledValueBox LabelText="Дата публикации"
                                                             ValueText="{Binding DatePublication}" />
 
-                                        <cc:LabeledValueBox LabelText="Дата публикации"
-                                                            ValueText="{Binding DatePublication}" />
-
                                         <Border BorderThickness="2"
                                                 BorderBrush="Black"
                                                 CornerRadius="6"
                                                 Margin="5"
                                                 Background="White">
                                             <StackPanel>
-                                                <TextBlock Text="Файл экслойта"
+                                                <TextBlock Text="Файл эксплойта"
                                                            FontSize="15"
                                                            FontWeight="Bold"
                                                            Style="{StaticResource MainTextBlockStyle}" />
                                                 <Button Content="Открыть"
                                                         Style="{StaticResource  OutlinedGrayButtonStyle}"
-                                                        Command="{Binding OpenFileCommand}"
+                                                        Command="{Binding DataContext.OpenFileCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding Id}" />
                                             </StackPanel>
                                         </Border>
