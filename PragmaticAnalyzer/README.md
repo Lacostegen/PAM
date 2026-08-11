@@ -23,8 +23,8 @@ dotnet --version
 ## Как запустить проект
 
 ```powershell
-git clone https://github.com/OWNER/REPOSITORY.git
-cd REPOSITORY\PragmaticAnalyzer
+git clone https://github.com/Lacostegen/PAM 
+cd .\PAM\PragmaticAnalyzer\
 dotnet restore .\PragmaticAnalyzer.csproj
 dotnet build .\PragmaticAnalyzer.csproj
 dotnet run --project .\PragmaticAnalyzer.csproj
