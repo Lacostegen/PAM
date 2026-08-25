@@ -1,6 +1,7 @@
 ﻿using PragmaticAnalyzer.Abstractions;
 using PragmaticAnalyzer.Configs;
 using PragmaticAnalyzer.Core;
+using PragmaticAnalyzer.Databases;
 using PragmaticAnalyzer.Enums;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -44,16 +45,67 @@ namespace PragmaticAnalyzer.Services
             try
             {
                 var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
-                var value = JsonSerializer.Deserialize<DTO<T>>(json);
-                if (value is not null && value.DtoType == type)
-                    return value.Value;
-                return default;
+                try
+                {
+                    var value = JsonSerializer.Deserialize<DTO<T>>(json);
+                    if (value is not null && value.DtoType == type)
+                        return value.Value;
+                }
+                catch
+                {
+                }
+
+                return LoadCompatibleDto<T>(json, type);
             }
             catch
             {
                 return default;
             }
         } // возварщает объект по абсолютному путю и DataType, который был конвертирован из  DTO
+
+        private static T? LoadCompatibleDto<T>(string json, DataType type)
+        {
+            if (type is DataType.Outcomes && typeof(T) == typeof(Outcomes))
+            {
+                try
+                {
+                    var dto = JsonSerializer.Deserialize<DTO<ObservableCollection<Outcomes>>>(json);
+                    if (dto is null || dto.DtoType != DataType.Outcomes || dto.Value is null)
+                    {
+                        return default;
+                    }
+
+                    var outcomes = new Outcomes();
+                    foreach (var item in dto.Value)
+                    {
+                        if (item.Technologys is not null)
+                        {
+                            foreach (var technology in item.Technologys)
+                            {
+                                outcomes.Technologys.Add(technology);
+                            }
+                        }
+
+                        if (item.Consequences is not null)
+                        {
+                            foreach (var consequence in item.Consequences)
+                            {
+                                consequence.NameThreats ??= [];
+                                outcomes.Consequences.Add(consequence);
+                            }
+                        }
+                    }
+
+                    return (T)(object)outcomes;
+                }
+                catch
+                {
+                    return default;
+                }
+            }
+
+            return default;
+        }
 
         public async Task<T?> LoadFileToPathAsync<T>(string? path, CancellationToken ct = default)
         {

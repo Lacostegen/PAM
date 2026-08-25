@@ -19,6 +19,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         private const string FastResponseMode = "Быстро";
         private const string DetailedResponseMode = "Подробно";
         private const string ExpertResponseMode = "Экспертно";
+        private const string NormalChatMode = "Обычный";
+        private const string ArenaChatMode = "Режим арены";
         private const string AutoRagMode = "Авто";
         private const string DisabledRagMode = "Без базы";
         private const string OnlyRagMode = "Только по базе";
@@ -36,6 +38,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         private ChatMessage? _typingMessage;
 
         public ObservableCollection<ChatMessage> Messages { get; } = [];
+
+        public ObservableCollection<string> ChatModes { get; } =
+        [
+            NormalChatMode,
+            ArenaChatMode
+        ];
 
         public ObservableCollection<string> ResponseModes { get; } =
         [
@@ -59,7 +67,21 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             MaxDetailPerformanceProfile
         ];
 
+        public ObservableCollection<ArenaModelEntry> ArenaModels { get; } = [];
+
         public string UserInput { get => Get<string>(); set => Set(value); }
+
+        public string ChatMode
+        {
+            get => Get<string>() ?? NormalChatMode;
+            set
+            {
+                Set(NormalizeChatMode(value));
+                NotifyPropertyChanged(nameof(IsArenaMode));
+            }
+        }
+
+        public bool IsArenaMode => NormalizeChatMode(ChatMode) == ArenaChatMode;
 
         public string ResponseMode { get => Get<string>(); set => Set(value); }
 
@@ -100,6 +122,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         public string LlamaServerPath { get => Get<string>(); set => Set(value); }
 
         public string ModelPath { get => Get<string>(); set => Set(value); }
+
+        public string ArenaModelPath { get => Get<string>(); set => Set(value); }
+
+        public string ArenaJudgeModelPath { get => Get<string>(); set => Set(value); }
+
+        public ArenaModelEntry? SelectedArenaModel { get => Get<ArenaModelEntry>(); set => Set(value); }
 
         public string ModelEndpointText { get => Get<string>(); set => Set(value); }
 
@@ -142,6 +170,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             IsModelLoading = false;
             CanCancelGeneration = false;
             IsServerAvailable = false;
+            ChatMode = NormalChatMode;
             ResponseMode = DetailedResponseMode;
             RagMode = AutoRagMode;
             PerformanceProfile = BalancedPerformanceProfile;
@@ -158,6 +187,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             RagDocumentCount = 0;
             ModelEndpointText = $"{LocalLlamaService.DefaultHost}:{LocalLlamaService.DefaultPort}";
             ModelLogPath = "Лог появится после запуска модели";
+            ArenaModelPath = string.Empty;
+            ArenaJudgeModelPath = string.Empty;
             WarmUpMaxTokens = 3;
 
             LoadTranslatorConfigAsync();
@@ -187,13 +218,37 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 _cts.Token);
 
             config ??= new TranslatorConfig();
+            var translatorConfigChanged = config.NormalizePortablePaths();
 
+            ChatMode = NormalizeChatMode(config.ChatMode);
             ResponseMode = NormalizeResponseMode(config.ResponseMode);
             RagMode = NormalizeRagMode(config.RagMode);
             PerformanceProfile = NormalizePerformanceProfile(config.PerformanceProfile);
             UseCompactSystemPrompt = config.UseCompactSystemPrompt;
             LlamaServerPath = config.LlamaServerPath;
             ModelPath = config.ModelPath;
+            ArenaJudgeModelPath = string.IsNullOrWhiteSpace(config.ArenaJudgeModelPath)
+                ? config.ModelPath
+                : config.ArenaJudgeModelPath;
+            ArenaModels.Clear();
+
+            foreach (var model in config.ArenaModels ?? [])
+            {
+                if (string.IsNullOrWhiteSpace(model.Path))
+                {
+                    continue;
+                }
+
+                ArenaModels.Add(new ArenaModelEntry
+                {
+                    Name = string.IsNullOrWhiteSpace(model.Name)
+                        ? Path.GetFileNameWithoutExtension(model.Path)
+                        : model.Name,
+                    Path = model.Path,
+                    IsEnabled = model.IsEnabled
+                });
+            }
+
             ContextSize = config.ContextSize;
             MaxTokens = config.MaxTokens;
             Temperature = config.Temperature;
@@ -206,6 +261,14 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             MicroBatchSize = config.MicroBatchSize;
             WarmUpMaxTokens = Math.Clamp(config.ReadinessProbeMaxTokens <= 0 ? 3 : config.ReadinessProbeMaxTokens, 1, 3);
             SystemPrompt = NormalizeSystemPrompt(config.SystemPrompt);
+
+            if (translatorConfigChanged)
+            {
+                await _fileService.SaveFileAsync(
+                    config,
+                    GlobalConfig.TranslatorConfigPath,
+                    _cts.Token);
+            }
         }
 
         private async Task SaveTranslatorConfigAsync()
@@ -214,12 +277,27 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             var config = new TranslatorConfig
             {
+                ChatMode = NormalizeChatMode(ChatMode),
                 ResponseMode = NormalizeResponseMode(ResponseMode),
                 RagMode = NormalizeRagMode(RagMode),
                 PerformanceProfile = NormalizePerformanceProfile(PerformanceProfile),
                 UseCompactSystemPrompt = UseCompactSystemPrompt,
                 LlamaServerPath = LlamaServerPath,
                 ModelPath = ModelPath,
+                ArenaJudgeModelPath = string.IsNullOrWhiteSpace(ArenaJudgeModelPath)
+                    ? ModelPath
+                    : ArenaJudgeModelPath,
+                ArenaModels = ArenaModels
+                    .Where(model => !string.IsNullOrWhiteSpace(model.Path))
+                    .Select(model => new ArenaModelConfig
+                    {
+                        Name = string.IsNullOrWhiteSpace(model.Name)
+                            ? Path.GetFileNameWithoutExtension(model.Path)
+                            : model.Name,
+                        Path = model.Path,
+                        IsEnabled = model.IsEnabled
+                    })
+                    .ToList(),
                 Port = LocalLlamaService.DefaultPort.ToString(),
                 ContextSize = ContextSize,
                 MaxTokens = MaxTokens,
@@ -235,6 +313,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 SystemPrompt = SystemPrompt
             };
 
+            config.NormalizePortablePaths();
+
             await _fileService.SaveFileAsync(
                 config,
                 GlobalConfig.TranslatorConfigPath,
@@ -248,17 +328,29 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 _cts.Token);
 
             _ragConfig = config ?? new RagConfig();
+            var ragConfigChanged = _ragConfig.NormalizePortablePaths();
             _ragConfig.IsEnabled = true;
+
+            if (ragConfigChanged)
+            {
+                await SaveRagConfigAsync();
+            }
         }
 
         private async Task SaveRagConfigAsync()
         {
             _ragConfig.IsEnabled = true;
+            _ragConfig.NormalizePortablePaths();
 
             await _fileService.SaveFileAsync(
                 _ragConfig,
                 GlobalConfig.RagConfigPath,
                 _cts.Token);
+        }
+
+        private static string GetTranslatorModelsDirectory()
+        {
+            return Path.Combine(Environment.CurrentDirectory, "Translator");
         }
 
         public RelayCommand StartModelCommand => GetCommand(async _ =>
@@ -268,13 +360,60 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
         public RelayCommand SelectModelPathCommand => GetCommand(_ =>
         {
-            var path = DialogService.OpenFileDialog(DialogService.GgufModelFilter);
+            var path = DialogService.OpenFileDialog(
+                DialogService.GgufModelFilter,
+                GetTranslatorModelsDirectory());
 
             if (!string.IsNullOrWhiteSpace(path))
             {
                 ModelPath = path;
+
+                if (string.IsNullOrWhiteSpace(ArenaJudgeModelPath))
+                {
+                    ArenaJudgeModelPath = path;
+                }
             }
         });
+
+        public RelayCommand SelectArenaModelPathCommand => GetCommand(_ =>
+        {
+            var path = DialogService.OpenFileDialog(
+                DialogService.GgufModelFilter,
+                GetTranslatorModelsDirectory());
+
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                ArenaModelPath = path;
+            }
+        });
+
+        public RelayCommand SelectArenaJudgeModelPathCommand => GetCommand(_ =>
+        {
+            var path = DialogService.OpenFileDialog(
+                DialogService.GgufModelFilter,
+                GetTranslatorModelsDirectory());
+
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                ArenaJudgeModelPath = path;
+            }
+        });
+
+        public RelayCommand AddArenaModelCommand => GetCommand(_ =>
+        {
+            AddArenaModel(ArenaModelPath);
+        }, _ => !string.IsNullOrWhiteSpace(ArenaModelPath));
+
+        public RelayCommand RemoveSelectedArenaModelCommand => GetCommand(_ =>
+        {
+            if (SelectedArenaModel == null)
+            {
+                return;
+            }
+
+            ArenaModels.Remove(SelectedArenaModel);
+            SelectedArenaModel = null;
+        }, _ => SelectedArenaModel != null);
 
         public RelayCommand SaveTranslatorConfigCommand => GetCommand(async _ =>
         {
@@ -338,6 +477,49 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         {
             ClearChat();
         });
+
+        private void AddArenaModel(string? modelPath)
+        {
+            if (string.IsNullOrWhiteSpace(modelPath))
+            {
+                return;
+            }
+
+            if (!File.Exists(modelPath) ||
+                !string.Equals(Path.GetExtension(modelPath), ".gguf", StringComparison.OrdinalIgnoreCase))
+            {
+                Messages.Add(new ChatMessage
+                {
+                    Sender = MessageSender.Assistant,
+                    Text = "⚠️ Для арены нужно выбрать существующий файл модели с расширением .gguf."
+                });
+                return;
+            }
+
+            var normalizedPath = Path.GetFullPath(modelPath);
+            if (ArenaModels.Any(model =>
+                    string.Equals(
+                        Path.GetFullPath(model.Path),
+                        normalizedPath,
+                        StringComparison.OrdinalIgnoreCase)))
+            {
+                Messages.Add(new ChatMessage
+                {
+                    Sender = MessageSender.Assistant,
+                    Text = "⚠️ Эта модель уже добавлена в список арены."
+                });
+                return;
+            }
+
+            ArenaModels.Add(new ArenaModelEntry
+            {
+                Name = Path.GetFileNameWithoutExtension(modelPath),
+                Path = modelPath,
+                IsEnabled = true
+            });
+
+            ArenaModelPath = string.Empty;
+        }
 
         private async Task StartModelAsync()
         {
@@ -1087,6 +1269,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             try
             {
+                if (NormalizeChatMode(ChatMode) == ArenaChatMode)
+                {
+                    await SendArenaMessageAsync(userMessage, generationToken);
+                    return;
+                }
+
                 GenerationStatusText = "Проверяю, загружена ли модель...";
                 var modelReadyStopwatch = System.Diagnostics.Stopwatch.StartNew();
                 try
@@ -1399,6 +1587,660 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 _generationCts?.Dispose();
                 _generationCts = null;
             }
+        }
+
+        private async Task SendArenaMessageAsync(string userMessage, CancellationToken generationToken)
+        {
+            var participants = GetEnabledArenaModels();
+
+            if (participants.Count < 2)
+            {
+                GenerationStatusText = "Режим арены: недостаточно моделей.";
+                SetTypingMessageText(
+                    "⚠️ Для режима арены добавь и включи минимум две GGUF-модели. " +
+                    "Они будут запускаться последовательно: первая ответит и выгрузится, затем вторая, и так далее.");
+                return;
+            }
+
+            var judgeModelPath = ResolveArenaJudgeModelPath(participants);
+            if (string.IsNullOrWhiteSpace(judgeModelPath) || !File.Exists(judgeModelPath))
+            {
+                GenerationStatusText = "Режим арены: модель-судья не найдена.";
+                SetTypingMessageText(
+                    "⚠️ Не найдена модель-судья. Укажи путь к GGUF-модели-судье или выбери основную GGUF-модель.");
+                return;
+            }
+
+            var arenaStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var normalizedRagMode = NormalizeRagMode(RagMode);
+            var effectiveMaxTokens = GetEffectiveMaxTokens();
+            var participantMaxTokens = GetArenaParticipantMaxTokens(effectiveMaxTokens, participants.Count);
+            var judgeMaxTokens = GetArenaJudgeMaxTokens(effectiveMaxTokens, participants.Count);
+            var ragContextText = string.Empty;
+            var ragElapsed = TimeSpan.Zero;
+            var promptChars = 0;
+            var promptBudgetChars = 0;
+            var promptOptimizationText = "арена: история отключена, ответ участника сжат";
+            var historyMessagesUsed = 0;
+
+            GenerationStatusText = "Арена: подбираю общий RAG-контекст для всех моделей...";
+            SetTypingMessageText(
+                $"🏟️ Режим арены: подготовка общего контекста. Участников: {participants.Count}.",
+                isTyping: true);
+
+            var ragStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var ragContext = BuildRagContext(userMessage, normalizedRagMode);
+            ragStopwatch.Stop();
+            ragElapsed = ragStopwatch.Elapsed;
+            ragContextText = ragContext.ContextText;
+
+            LastRagSourcesText = string.IsNullOrWhiteSpace(ragContext.SourcesText)
+                ? "Источники RAG: нет найденного контекста."
+                : ragContext.SourcesText;
+
+            if (normalizedRagMode == OnlyRagMode && string.IsNullOrWhiteSpace(ragContextText))
+            {
+                GenerationStatusText = "Арена: в базе знаний не найден подходящий контекст.";
+                SetTypingMessageText(
+                    "В режиме «Только по базе» подходящий контекст не найден. " +
+                    "Арена не будет запускать модели без подтвержденных данных из базы знаний.");
+                return;
+            }
+
+            var promptPreparation = BuildPromptPreparation(
+                userMessage,
+                ragContextText,
+                FastResponseMode,
+                normalizedRagMode,
+                participantMaxTokens);
+
+            var participantMessages = promptPreparation.ChatMessages;
+            ragContextText = promptPreparation.RagContextText;
+            participantMaxTokens = promptPreparation.EffectiveMaxTokens;
+            participantMessages = BuildArenaParticipantMessages(
+                userMessage,
+                ragContextText,
+                normalizedRagMode);
+            promptChars = participantMessages.Sum(message => message.Content.Length);
+            promptBudgetChars = promptPreparation.PromptBudgetChars;
+            promptOptimizationText = string.IsNullOrWhiteSpace(promptPreparation.OptimizationText) ||
+                                     string.Equals(promptPreparation.OptimizationText, "нет", StringComparison.OrdinalIgnoreCase)
+                ? "арена: история отключена, ответ участника сжат"
+                : $"{promptPreparation.OptimizationText}; арена: история отключена, ответ участника сжат";
+            historyMessagesUsed = 0;
+
+            LastRequestSummaryText = BuildLastRequestSummary(
+                promptChars,
+                ragContextText.Length,
+                historyMessagesUsed,
+                participantMaxTokens,
+                promptBudgetChars,
+                promptOptimizationText,
+                ragContext.SourceCount);
+
+            var answers = new List<ArenaModelAnswer>();
+
+            for (var i = 0; i < participants.Count; i++)
+            {
+                generationToken.ThrowIfCancellationRequested();
+
+                var participant = participants[i];
+                var participantNumber = i + 1;
+                var modelStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                GenerationStatusText =
+                    $"Арена: модель {participantNumber}/{participants.Count} — загрузка {participant.DisplayName}...";
+                SetTypingMessageText(
+                    BuildArenaProgressText(
+                        participants.Count,
+                        answers,
+                        $"Загружается модель {participantNumber}/{participants.Count}: {participant.DisplayName}."),
+                    isTyping: true);
+
+                var arenaAnswer = new ArenaModelAnswer
+                {
+                    ModelName = participant.DisplayName,
+                    ModelPath = participant.Path
+                };
+
+                try
+                {
+                    var result = await GenerateArenaParticipantAnswerAsync(
+                        participant,
+                        participantMessages,
+                        participantMaxTokens,
+                        generationToken);
+
+                    arenaAnswer.Answer = result.Answer;
+                    arenaAnswer.LoadElapsed = result.LoadElapsed;
+                    arenaAnswer.GenerationElapsed = result.GenerationElapsed;
+                    arenaAnswer.OutputChars = result.OutputChars;
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    arenaAnswer.Error = ex.Message;
+                }
+                finally
+                {
+                    var unloadStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    InfrastructureOrchestrator.LocalLlamaService.Unload();
+                    unloadStopwatch.Stop();
+                    arenaAnswer.UnloadElapsed = unloadStopwatch.Elapsed;
+                    IsServerAvailable = false;
+                    ModelLogPath = InfrastructureOrchestrator.LocalLlamaService.CurrentLogPath;
+                }
+
+                modelStopwatch.Stop();
+                arenaAnswer.Elapsed = modelStopwatch.Elapsed;
+                answers.Add(arenaAnswer);
+
+                GenerationStatusText =
+                    $"Арена: модель {participantNumber}/{participants.Count} завершила работу и выгружена.";
+                SetTypingMessageText(
+                    BuildArenaProgressText(
+                        participants.Count,
+                        answers,
+                        $"Модель {participant.DisplayName} завершила работу и выгружена."),
+                    isTyping: true);
+
+                await YieldToUiAsync();
+            }
+
+            var successfulAnswers = answers.Where(answer => answer.IsSuccess).ToList();
+            if (successfulAnswers.Count == 0)
+            {
+                arenaStopwatch.Stop();
+                GenerationStatusText = "Арена: ни одна модель не вернула ответ.";
+                GenerationDiagnosticsText =
+                    $"Арена завершилась без ответов. Всего времени: {FormatDuration(arenaStopwatch.Elapsed)}.";
+                SetTypingMessageText(
+                    "⚠️ Ни одна модель арены не вернула ответ. Проверь пути к GGUF-моделям, совместимость с llama-server и лог запуска.");
+                return;
+            }
+
+            GenerationStatusText = "Арена: загружаю модель-судью и формирую голосование...";
+            SetTypingMessageText(
+                BuildArenaProgressText(
+                    participants.Count,
+                    answers,
+                    $"Загружается модель-судья: {Path.GetFileNameWithoutExtension(judgeModelPath)}."),
+                isTyping: true);
+
+            try
+            {
+                var judgeResult = await GenerateArenaJudgeReportAsync(
+                    userMessage,
+                    ragContextText,
+                    answers,
+                    judgeModelPath,
+                    judgeMaxTokens,
+                    generationToken);
+
+                var judgeUnloadStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                InfrastructureOrchestrator.LocalLlamaService.Unload();
+                judgeUnloadStopwatch.Stop();
+                judgeResult.UnloadElapsed = judgeUnloadStopwatch.Elapsed;
+
+                arenaStopwatch.Stop();
+                GenerationStatusText = "Арена: итоговое голосование получено.";
+                GenerationDiagnosticsText = BuildArenaDiagnostics(
+                    participants.Count,
+                    successfulAnswers.Count,
+                    answers,
+                    judgeResult,
+                    ragElapsed,
+                    arenaStopwatch.Elapsed,
+                    promptChars,
+                    participantMaxTokens,
+                    judgeMaxTokens);
+
+                SetTypingMessageText(
+                    BuildArenaFinalText(judgeResult, answers, arenaStopwatch.Elapsed));
+                _typingMessage = null;
+            }
+            finally
+            {
+                if (InfrastructureOrchestrator.LocalLlamaService.IsLoaded)
+                {
+                    InfrastructureOrchestrator.LocalLlamaService.Unload();
+                }
+
+                IsServerAvailable = false;
+                ModelLogPath = InfrastructureOrchestrator.LocalLlamaService.CurrentLogPath;
+            }
+        }
+
+        private List<ArenaModelEntry> GetEnabledArenaModels()
+        {
+            return ArenaModels
+                .Where(model =>
+                    model.IsEnabled &&
+                    !string.IsNullOrWhiteSpace(model.Path) &&
+                    File.Exists(model.Path))
+                .ToList();
+        }
+
+        private string ResolveArenaJudgeModelPath(IReadOnlyList<ArenaModelEntry> participants)
+        {
+            if (!string.IsNullOrWhiteSpace(ArenaJudgeModelPath) && File.Exists(ArenaJudgeModelPath))
+            {
+                return ArenaJudgeModelPath;
+            }
+
+            if (!string.IsNullOrWhiteSpace(ModelPath) && File.Exists(ModelPath))
+            {
+                return ModelPath;
+            }
+
+            return participants.FirstOrDefault(model => File.Exists(model.Path))?.Path ?? string.Empty;
+        }
+
+        private static int GetArenaParticipantMaxTokens(int effectiveMaxTokens, int participantCount)
+        {
+            var upperLimit = participantCount <= 2 ? 650 : 520;
+            return Math.Clamp(Math.Min(effectiveMaxTokens, upperLimit), 260, upperLimit);
+        }
+
+        private static int GetArenaJudgeMaxTokens(int effectiveMaxTokens, int participantCount)
+        {
+            var target = participantCount <= 2 ? 950 : 1150;
+            var upperLimit = participantCount <= 2 ? 1200 : 1500;
+            return Math.Clamp(Math.Max(effectiveMaxTokens, target), 700, upperLimit);
+        }
+
+        private static List<LocalLlamaChatMessage> BuildArenaParticipantMessages(
+            string userMessage,
+            string ragContextText,
+            string ragMode)
+        {
+            var system = new StringBuilder();
+            system.AppendLine("Ты модель-участник арены PragmaticAnalyzer.");
+            system.AppendLine("Ответь независимо, на русском языке, кратко и технически. Не упоминай арену, судью и другие модели.");
+            system.AppendLine("Не повторяй одни и те же блоки текста. Не выдумывай CVE, BDU, версии, имена файлов, семейства ВПО и факты.");
+            system.AppendLine(BuildRagModeInstruction(ragMode));
+            system.AppendLine("Строго используй формат:");
+            system.AppendLine("1. Краткий вывод.");
+            system.AppendLine("2. Вероятная классификация.");
+            system.AppendLine("3. Первые действия.");
+            system.AppendLine("4. Что проверить.");
+            system.AppendLine("5. Ограничения.");
+
+            var user = new StringBuilder();
+            user.AppendLine("Вопрос:");
+            user.AppendLine(userMessage.Trim());
+
+            if (!string.IsNullOrWhiteSpace(ragContextText))
+            {
+                user.AppendLine();
+                user.AppendLine("Контекст базы знаний:");
+                user.AppendLine(ragContextText.Trim());
+            }
+
+            return
+            [
+                new LocalLlamaChatMessage("system", system.ToString().Trim()),
+                new LocalLlamaChatMessage("user", user.ToString().Trim())
+            ];
+        }
+
+        private async Task<ArenaGenerationResult> GenerateArenaParticipantAnswerAsync(
+            ArenaModelEntry participant,
+            IReadOnlyList<LocalLlamaChatMessage> chatMessages,
+            int maxTokens,
+            CancellationToken ct)
+        {
+            var loadStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            await InfrastructureOrchestrator.LocalLlamaService.LoadAsync(
+                participant.Path,
+                ContextSize,
+                GpuLayerCount,
+                ThreadCount,
+                BatchSize,
+                MicroBatchSize,
+                Math.Clamp(WarmUpMaxTokens <= 0 ? 3 : WarmUpMaxTokens, 1, 3),
+                LlamaServerPath,
+                ct);
+
+            loadStopwatch.Stop();
+
+            IsServerAvailable = true;
+            ModelLogPath = InfrastructureOrchestrator.LocalLlamaService.CurrentLogPath;
+            GenerationStatusText = $"Арена: модель {participant.DisplayName} генерирует ответ...";
+
+            var answerBuilder = new StringBuilder();
+            var generationStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            await foreach (var chunk in InfrastructureOrchestrator.LocalLlamaService.GenerateStreamAsync(
+                               chatMessages,
+                               maxTokens,
+                               (float)Temperature,
+                               (float)TopP,
+                               (float)RepeatPenalty,
+                               ct))
+            {
+                answerBuilder.Append(chunk);
+            }
+
+            generationStopwatch.Stop();
+
+            var answer = CleanAssistantText(answerBuilder.ToString());
+            if (string.IsNullOrWhiteSpace(answer))
+            {
+                answer = "[Модель вернула пустой ответ.]";
+            }
+
+            return new ArenaGenerationResult
+            {
+                Answer = answer,
+                LoadElapsed = loadStopwatch.Elapsed,
+                GenerationElapsed = generationStopwatch.Elapsed,
+                OutputChars = answer.Length
+            };
+        }
+
+        private async Task<ArenaJudgeResult> GenerateArenaJudgeReportAsync(
+            string userMessage,
+            string ragContextText,
+            IReadOnlyList<ArenaModelAnswer> answers,
+            string judgeModelPath,
+            int maxTokens,
+            CancellationToken ct)
+        {
+            var loadStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            await InfrastructureOrchestrator.LocalLlamaService.LoadAsync(
+                judgeModelPath,
+                ContextSize,
+                GpuLayerCount,
+                ThreadCount,
+                BatchSize,
+                MicroBatchSize,
+                Math.Clamp(WarmUpMaxTokens <= 0 ? 3 : WarmUpMaxTokens, 1, 3),
+                LlamaServerPath,
+                ct);
+
+            loadStopwatch.Stop();
+
+            IsServerAvailable = true;
+            ModelLogPath = InfrastructureOrchestrator.LocalLlamaService.CurrentLogPath;
+
+            var judgeMessages = BuildArenaJudgeMessages(
+                userMessage,
+                ragContextText,
+                answers);
+
+            var reportBuilder = new StringBuilder();
+            var lastUiUpdate = DateTime.UtcNow;
+            var generationStopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+            await foreach (var chunk in InfrastructureOrchestrator.LocalLlamaService.GenerateStreamAsync(
+                               judgeMessages,
+                               maxTokens,
+                               0.2f,
+                               0.9f,
+                               1.08f,
+                               ct))
+            {
+                reportBuilder.Append(chunk);
+
+                if (_typingMessage == null ||
+                    (DateTime.UtcNow - lastUiUpdate).TotalMilliseconds < 60 &&
+                    !chunk.Contains('\n') &&
+                    !chunk.Contains('\r'))
+                {
+                    continue;
+                }
+
+                _typingMessage.IsTyping = false;
+                _typingMessage.Text = CleanAssistantText(reportBuilder.ToString());
+                lastUiUpdate = DateTime.UtcNow;
+                await YieldToUiAsync();
+            }
+
+            generationStopwatch.Stop();
+
+            var report = CleanAssistantText(reportBuilder.ToString());
+            if (string.IsNullOrWhiteSpace(report))
+            {
+                report = "Модель-судья не смогла сформировать итоговый отчет.";
+            }
+
+            return new ArenaJudgeResult
+            {
+                Report = report,
+                LoadElapsed = loadStopwatch.Elapsed,
+                GenerationElapsed = generationStopwatch.Elapsed,
+                OutputChars = report.Length
+            };
+        }
+
+        private List<LocalLlamaChatMessage> BuildArenaJudgeMessages(
+            string userMessage,
+            string ragContextText,
+            IReadOnlyList<ArenaModelAnswer> answers)
+        {
+            var successfulAnswers = answers.Where(answer => answer.IsSuccess).ToList();
+            var builder = new StringBuilder();
+
+            builder.AppendLine("Вопрос пользователя:");
+            builder.AppendLine(userMessage.Trim());
+
+            if (!string.IsNullOrWhiteSpace(ragContextText))
+            {
+                builder.AppendLine();
+                builder.AppendLine("Общий RAG-контекст, который был доступен моделям:");
+                builder.AppendLine(LimitTextByChars(ragContextText, 2500));
+            }
+
+            builder.AppendLine();
+            builder.AppendLine("Ответы моделей-участников:");
+
+            for (var i = 0; i < successfulAnswers.Count; i++)
+            {
+                var answer = successfulAnswers[i];
+                builder.AppendLine();
+                builder.AppendLine($"[{i + 1}] {answer.ModelName}");
+                builder.AppendLine(LimitTextByChars(answer.Answer, 1800));
+            }
+
+            var failedAnswers = answers.Where(answer => !answer.IsSuccess).ToList();
+            if (failedAnswers.Count > 0)
+            {
+                builder.AppendLine();
+                builder.AppendLine("Модели, которые не смогли ответить:");
+                foreach (var failed in failedAnswers)
+                {
+                    builder.AppendLine($"- {failed.ModelName}: {failed.Error}");
+                }
+            }
+
+            var system = new StringBuilder();
+            var isComparisonMode = successfulAnswers.Count == 2;
+            system.AppendLine("Ты модель-судья в режиме арены PragmaticAnalyzer.");
+            system.AppendLine("Сравни ответы моделей на русском языке. Не выдумывай факты, которых нет в вопросе, RAG-контексте или ответах участников.");
+            system.AppendLine("Твоя задача — оценить не стиль текста, а совпадение важных тезисов, расхождения, пропуски и практический итог.");
+            system.AppendLine(isComparisonMode
+                ? "Так как успешных ответов только два, это режим сравнения: пиши «2 из 2 согласны», «1 из 2 упомянула», «мнения разделились», но не называй это полноценным большинством."
+                : "Так как успешных ответов три или больше, это режим голосования: для каждого важного тезиса явно указывай счет моделей.");
+            system.AppendLine("Не делай главным выводом выбор победителя. Если одна модель полезнее, отметь это только после консенсуса и расхождений.");
+            system.AppendLine("Обязательно используй формат:");
+            system.AppendLine(isComparisonMode
+                ? "1. Краткий итог сравнения."
+                : "1. Краткий итог голосования.");
+            system.AppendLine("2. Где модели согласны.");
+            system.AppendLine("3. Где мнения разделились.");
+            system.AppendLine("4. Итоговая рекомендация.");
+            system.AppendLine("5. Особое мнение и ограничения.");
+            system.AppendLine("Пиши числа явно: например, «2 из 2 моделей», «1 из 2 моделей», «4 из 5 моделей». Если точного большинства нет, так и скажи.");
+            system.AppendLine("Коротко отмечай слабые места ответов: нет изоляции, нет журналов, слишком общие рекомендации, повторы, неподтвержденные факты.");
+            system.AppendLine("Не раскрывай скрытые рассуждения и не используй теги <think>.");
+
+            return
+            [
+                new LocalLlamaChatMessage("system", system.ToString().Trim()),
+                new LocalLlamaChatMessage("user", builder.ToString().Trim())
+            ];
+        }
+
+        private void SetTypingMessageText(string text, bool isTyping = false)
+        {
+            if (_typingMessage == null)
+            {
+                _typingMessage = new ChatMessage
+                {
+                    Sender = MessageSender.Assistant
+                };
+                Messages.Add(_typingMessage);
+            }
+
+            _typingMessage.IsTyping = isTyping;
+            _typingMessage.Text = text;
+        }
+
+        private static string BuildArenaDiagnostics(
+            int participantCount,
+            int successfulCount,
+            IReadOnlyList<ArenaModelAnswer> answers,
+            ArenaJudgeResult judgeResult,
+            TimeSpan ragElapsed,
+            TimeSpan totalElapsed,
+            int promptChars,
+            int participantMaxTokens,
+            int judgeMaxTokens)
+        {
+            var participantLoadElapsed = TimeSpan.FromTicks(answers.Sum(answer => answer.LoadElapsed.Ticks));
+            var participantGenerationElapsed = TimeSpan.FromTicks(answers.Sum(answer => answer.GenerationElapsed.Ticks));
+            var participantUnloadElapsed = TimeSpan.FromTicks(answers.Sum(answer => answer.UnloadElapsed.Ticks));
+            var participantOutputChars = answers.Sum(answer => answer.OutputChars);
+            var participantOutputTokens = EstimateTokenCountForDisplay(participantOutputChars);
+            var participantGenerationSeconds = Math.Max(0.1, participantGenerationElapsed.TotalSeconds);
+            var participantTokensPerSecond = participantOutputTokens / participantGenerationSeconds;
+            var judgeOutputTokens = EstimateTokenCountForDisplay(judgeResult.OutputChars);
+            var judgeTokensPerSecond = judgeOutputTokens / Math.Max(0.1, judgeResult.GenerationElapsed.TotalSeconds);
+
+            return
+                $"Арена: участников {participantCount}, успешных ответов {successfulCount}. " +
+                $"RAG {FormatDuration(ragElapsed)}, prompt участника {promptChars:N0} симв. " +
+                $"Участники: загрузка {FormatDuration(participantLoadElapsed)}, генерация {FormatDuration(participantGenerationElapsed)} " +
+                $"(~{participantTokensPerSecond:F1} ток/с суммарно), выгрузка {FormatDuration(participantUnloadElapsed)}. " +
+                $"Судья: загрузка {FormatDuration(judgeResult.LoadElapsed)}, генерация {FormatDuration(judgeResult.GenerationElapsed)} " +
+                $"(~{judgeTokensPerSecond:F1} ток/с), выгрузка {FormatDuration(judgeResult.UnloadElapsed)}. " +
+                $"Max tokens: участник {participantMaxTokens}, судья {judgeMaxTokens}. Всего {FormatDuration(totalElapsed)}.";
+        }
+
+        private static string BuildArenaProgressText(
+            int totalParticipants,
+            IReadOnlyList<ArenaModelAnswer> answers,
+            string currentAction)
+        {
+            var completed = answers.Count;
+            var successful = answers.Count(answer => answer.IsSuccess);
+            var failed = answers.Count(answer => !answer.IsSuccess);
+
+            var builder = new StringBuilder();
+            builder.AppendLine("🏟️ Режим арены");
+            builder.AppendLine(currentAction);
+            builder.AppendLine($"Готово: {completed}/{totalParticipants}; успешных ответов: {successful}; ошибок: {failed}.");
+
+            foreach (var answer in answers)
+            {
+                var status = answer.IsSuccess ? "ответ получен" : $"ошибка: {answer.Error}";
+                builder.AppendLine(
+                    $"- {answer.ModelName}: {status}; " +
+                    $"загрузка {FormatDuration(answer.LoadElapsed)}, " +
+                    $"генерация {FormatDuration(answer.GenerationElapsed)}, " +
+                    $"выгрузка {FormatDuration(answer.UnloadElapsed)}, " +
+                    $"всего {FormatDuration(answer.Elapsed)}");
+            }
+
+            return builder.ToString().Trim();
+        }
+
+        private static string BuildArenaFinalText(
+            ArenaJudgeResult judgeResult,
+            IReadOnlyList<ArenaModelAnswer> answers,
+            TimeSpan elapsed)
+        {
+            var builder = new StringBuilder();
+            builder.AppendLine("⚖️ Итог арены");
+            builder.AppendLine();
+            builder.AppendLine(judgeResult.Report.Trim());
+            builder.AppendLine();
+            builder.AppendLine("Участники:");
+
+            foreach (var answer in answers)
+            {
+                var status = answer.IsSuccess
+                    ? "ответ получен"
+                    : $"ошибка: {answer.Error}";
+
+                builder.AppendLine(
+                    $"- {answer.ModelName}: {status}; " +
+                    $"загрузка {FormatDuration(answer.LoadElapsed)}, " +
+                    $"генерация {FormatDuration(answer.GenerationElapsed)}, " +
+                    $"выгрузка {FormatDuration(answer.UnloadElapsed)}, " +
+                    $"всего {FormatDuration(answer.Elapsed)}");
+            }
+
+            builder.AppendLine(
+                $"Модель-судья: загрузка {FormatDuration(judgeResult.LoadElapsed)}, " +
+                $"генерация {FormatDuration(judgeResult.GenerationElapsed)}, " +
+                $"выгрузка {FormatDuration(judgeResult.UnloadElapsed)}.");
+            builder.AppendLine($"Общее время арены: {FormatDuration(elapsed)}.");
+
+            return builder.ToString().Trim();
+        }
+
+        private sealed class ArenaModelAnswer
+        {
+            public string ModelName { get; set; } = string.Empty;
+
+            public string ModelPath { get; set; } = string.Empty;
+
+            public string Answer { get; set; } = string.Empty;
+
+            public string Error { get; set; } = string.Empty;
+
+            public TimeSpan Elapsed { get; set; }
+
+            public TimeSpan LoadElapsed { get; set; }
+
+            public TimeSpan GenerationElapsed { get; set; }
+
+            public TimeSpan UnloadElapsed { get; set; }
+
+            public int OutputChars { get; set; }
+
+            public bool IsSuccess => string.IsNullOrWhiteSpace(Error) && !string.IsNullOrWhiteSpace(Answer);
+        }
+
+        private sealed class ArenaGenerationResult
+        {
+            public string Answer { get; set; } = string.Empty;
+
+            public TimeSpan LoadElapsed { get; set; }
+
+            public TimeSpan GenerationElapsed { get; set; }
+
+            public int OutputChars { get; set; }
+        }
+
+        private sealed class ArenaJudgeResult
+        {
+            public string Report { get; set; } = string.Empty;
+
+            public TimeSpan LoadElapsed { get; set; }
+
+            public TimeSpan GenerationElapsed { get; set; }
+
+            public TimeSpan UnloadElapsed { get; set; }
+
+            public int OutputChars { get; set; }
         }
 
         private async Task EnsureLocalLlamaLoadedFromSettingsAsync(CancellationToken ct)
@@ -1728,9 +2570,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             if (promptChars > promptBudgetChars &&
                 NormalizeResponseMode(responseMode) == FastResponseMode &&
-                optimizedMaxTokens > 450)
+                optimizedMaxTokens > 550)
             {
-                optimizedMaxTokens = Math.Clamp(Math.Min(optimizedMaxTokens, 450), 180, 600);
+                optimizedMaxTokens = Math.Clamp(Math.Min(optimizedMaxTokens, 550), 260, 700);
                 promptBudgetChars = GetPromptBudgetChars(optimizedMaxTokens);
                 optimizationActions.Add($"max tokens снижен до {optimizedMaxTokens} для быстрого ответа");
             }
@@ -1836,12 +2678,15 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 var idPart = string.IsNullOrWhiteSpace(document.Id)
                     ? string.Empty
                     : $", ID: {document.Id}";
+                var sectionPart = string.IsNullOrWhiteSpace(document.Section)
+                    ? string.Empty
+                    : $", раздел: {document.Section}";
                 var pagePart = document.Page > 0
                     ? $", стр. {document.Page}"
                     : string.Empty;
 
                 builder.AppendLine(
-                    $"[{index}] {document.Source} / {title}{idPart}{pagePart}; score {result.Score:0.##}");
+                    $"[{index}] {document.Source} / {title}{idPart}{sectionPart}{pagePart}; score {result.Score:0.##}");
                 index++;
             }
 
@@ -1900,6 +2745,46 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             };
         }
 
+        private string BuildEffectiveSystemPrompt(string systemPrompt)
+        {
+            var builder = new StringBuilder();
+            var normalizedPrompt = NormalizeSystemPrompt(systemPrompt);
+
+            builder.AppendLine("Сведения о программе и текущей модели:");
+            builder.AppendLine("- ты работаешь внутри WPF-программы PragmaticAnalyzer для анализа источников знаний по информационной безопасности;");
+            builder.AppendLine("- ответы генерируются локальной GGUF-моделью через llama.cpp/llama-server;");
+            builder.AppendLine($"- выбранная модель: {GetModelDisplayName(ModelPath)};");
+            builder.AppendLine($"- загруженная модель: {GetLoadedModelDisplayName()};");
+            builder.AppendLine($"- режим ответа: {NormalizeResponseMode(ResponseMode)}; RAG: {NormalizeRagMode(RagMode)}; профиль: {NormalizePerformanceProfile(PerformanceProfile)}.");
+            builder.AppendLine("Если пользователь спрашивает, кто ты, какая модель используется или как устроено подключение, отвечай по этим сведениям и не выдумывай внешнюю платформу.");
+
+            if (!string.IsNullOrWhiteSpace(normalizedPrompt))
+            {
+                builder.AppendLine();
+                builder.AppendLine(normalizedPrompt.Trim());
+            }
+
+            return builder.ToString().Trim();
+        }
+
+        private string GetLoadedModelDisplayName()
+        {
+            if (InfrastructureOrchestrator.LocalLlamaService.IsLoaded &&
+                !string.IsNullOrWhiteSpace(InfrastructureOrchestrator.LocalLlamaService.LoadedModelPath))
+            {
+                return GetModelDisplayName(InfrastructureOrchestrator.LocalLlamaService.LoadedModelPath);
+            }
+
+            return "модель еще не загружена";
+        }
+
+        private static string GetModelDisplayName(string? modelPath)
+        {
+            return string.IsNullOrWhiteSpace(modelPath)
+                ? "не выбрана"
+                : Path.GetFileNameWithoutExtension(modelPath);
+        }
+
         private List<LocalLlamaChatMessage> BuildLocalLlamaMessages(
             string currentUserMessage,
             string ragContextText,
@@ -1908,9 +2793,10 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             string ragMode,
             bool useCompactSystemPrompt)
         {
+            var effectiveSystemPrompt = BuildEffectiveSystemPrompt(SystemPrompt);
             var messages = new List<LocalLlamaChatMessage>
             {
-                new("system", BuildSystemMessage(SystemPrompt, ragContextText, responseMode, ragMode, useCompactSystemPrompt))
+                new("system", BuildSystemMessage(effectiveSystemPrompt, ragContextText, responseMode, ragMode, useCompactSystemPrompt))
             };
 
             var conversationMessages = BuildConversationMessages(
@@ -1994,7 +2880,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             return NormalizePerformanceProfile(PerformanceProfile) switch
             {
-                FastPerformanceProfile => Math.Clamp(Math.Min(configuredMaxTokens, 650), 180, 900),
+                FastPerformanceProfile => Math.Clamp(Math.Min(configuredMaxTokens, 750), 260, 900),
                 QualityPerformanceProfile => Math.Clamp(Math.Max(configuredMaxTokens, 1300), 700, 1800),
                 MaxDetailPerformanceProfile => Math.Clamp(Math.Max(configuredMaxTokens, 1800), 900, 2400),
                 _ => Math.Clamp(configuredMaxTokens, 300, 1300)
@@ -2033,7 +2919,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     Profile = FastPerformanceProfile,
                     ResponseMode = FastResponseMode,
                     ContextSize = 4096,
-                    MaxTokens = 650,
+                    MaxTokens = 750,
                     Temperature = 0.2,
                     TopP = 0.85,
                     RepeatPenalty = 1.07,
@@ -2144,6 +3030,16 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             return BalancedPerformanceProfile;
         }
 
+        private static string NormalizeChatMode(string? chatMode)
+        {
+            if (string.Equals(chatMode, ArenaChatMode, StringComparison.OrdinalIgnoreCase))
+            {
+                return ArenaChatMode;
+            }
+
+            return NormalChatMode;
+        }
+
         private static string NormalizeResponseMode(string? responseMode)
         {
             if (string.Equals(responseMode, FastResponseMode, StringComparison.OrdinalIgnoreCase))
@@ -2179,14 +3075,14 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             return NormalizeResponseMode(responseMode) switch
             {
                 FastResponseMode =>
-                    "Режим ответа: быстрый. Ответь кратко и прикладно, без длинных вступлений и без повторения вопроса. " +
+                    "Режим ответа: быстрый. Ответь компактно, но содержательно: обычно 3-5 коротких пунктов или абзацев, не одним словом и не одной фразой. " +
                     "Если вопрос про компьютерный инцидент, используй формат: краткий вывод, вероятный тип, что сделать срочно, что проверить, риск. " +
                     "Не добавляй отдельный блок \"Факты из базы знаний\"; используй только релевантные сведения внутри нужных пунктов. " +
                     "Не называй конкретные семейства ВПО, инструменты, CVE/BDU и версии, если они прямо не указаны или не подтверждены артефактами.",
                 ExpertResponseMode =>
-                    "Режим ответа: экспертный. Дай развёрнутый технический ответ: вывод, факты, анализ, риски, рекомендации и ограничения. Не экономь на важных деталях.",
+                    "Режим ответа: экспертный. Дай развёрнутый технический ответ: вывод, факты, анализ, риски, рекомендации, источники и ограничения. Не экономь на важных деталях.",
                 _ =>
-                    "Режим ответа: подробный. Дай структурированный ответ средней глубины: вывод, пояснение, рекомендации и ограничения."
+                    "Режим ответа: подробный. Дай структурированный ответ средней глубины: краткий вывод, пояснение, источники, рекомендации и ограничения. Не ограничивайся одним предложением."
             };
         }
 
@@ -2217,6 +3113,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             builder.AppendLine(BuildResponseModeInstruction(responseMode));
             builder.AppendLine(BuildRagModeInstruction(ragMode));
             builder.AppendLine("Для технических ответов используй: 1) краткий вывод; 2) что известно; 3) анализ; 4) действия/рекомендации; 5) ограничения.");
+            builder.AppendLine("Если объясняешь термин, определение или правовое требование из RAG-контекста, указывай источник рядом с утверждением: [номер], название/источник, раздел или страницу при наличии.");
 
             var normalizedPrompt = NormalizeSystemPrompt(systemPrompt);
 
@@ -2233,7 +3130,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 builder.AppendLine("Контекст базы знаний:");
                 builder.AppendLine(ragContextText.Trim());
                 builder.AppendLine();
-                builder.AppendLine("Используй только релевантные факты из контекста и не пересказывай нерелевантные определения. Если точного фрагмента нет, прямо скажи об этом. Не создавай отдельный раздел \"Факты из базы знаний\", если пользователь сам его не попросил.");
+                builder.AppendLine("Используй только релевантные факты из контекста и не пересказывай нерелевантные определения. Если точного фрагмента нет, прямо скажи об этом. Не создавай отдельный раздел \"Факты из базы знаний\", если пользователь сам его не попросил. Для терминов из нормативных, правовых, методических документов или стандартов обязательно называй документ/источник из блока RAG.");
             }
 
             return builder.ToString().Trim();
@@ -2266,10 +3163,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             builder.AppendLine("1. Краткий вывод.");
             builder.AppendLine("2. Что известно из вопроса и релевантного контекста.");
             builder.AppendLine("3. Анализ.");
-            builder.AppendLine("4. Рекомендации или дальнейшие действия.");
-            builder.AppendLine("5. Ограничения ответа, если данных недостаточно.");
+            builder.AppendLine("4. Источники, если использовались определения, термины или правовые требования из RAG.");
+            builder.AppendLine("5. Рекомендации или дальнейшие действия.");
+            builder.AppendLine("6. Ограничения ответа, если данных недостаточно.");
             builder.AppendLine("Если вопрос простой, отвечай короче, но сохраняй ясность.");
             builder.AppendLine("Не выдумывай ID, CVE, BDU, версии, настройки, пути, команды, имена файлов, названия ВПО и факты.");
+            builder.AppendLine("Если объясняешь термин, определение или правовое требование из RAG-контекста, указывай источник рядом с утверждением: [номер], название/источник, раздел или страницу при наличии.");
             builder.AppendLine();
 
             var normalizedPrompt = NormalizeSystemPrompt(systemPrompt);
@@ -2292,6 +3191,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 builder.AppendLine("- Не смешивай сведения из разных записей без явной связи.");
                 builder.AppendLine("- Не создавай отдельный раздел \"Факты из базы знаний\", если пользователь сам его не попросил.");
                 builder.AppendLine("- Не называй конкретные семейства ВПО, инструменты, CVE/BDU и версии без подтверждения в вопросе или контексте.");
+                builder.AppendLine("- Для терминов из нормативных, правовых, методических документов или стандартов обязательно называй документ/источник из блока RAG.");
             }
 
             return builder.ToString().Trim();
@@ -2345,6 +3245,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                    text.StartsWith("🔴") ||
                    text.StartsWith("🟢") ||
                    text.StartsWith("🟡") ||
+                   text.StartsWith("🏟️") ||
+                   text.StartsWith("⚖️") ||
                    text.StartsWith("⏳");
         }
 
@@ -2445,5 +3347,34 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         public string Text { get => Get<string>(); set => Set(value); }
         public DateTime Timestamp { get; set; } = DateTime.Now;
         public bool IsTyping { get => Get<bool>(); set => Set(value); }
+    }
+
+    public class ArenaModelEntry : ViewModelBase
+    {
+        public string Name
+        {
+            get => Get<string>() ?? string.Empty;
+            set
+            {
+                Set(value);
+                NotifyPropertyChanged(nameof(DisplayName));
+            }
+        }
+
+        public string Path
+        {
+            get => Get<string>() ?? string.Empty;
+            set
+            {
+                Set(value);
+                NotifyPropertyChanged(nameof(DisplayName));
+            }
+        }
+
+        public bool IsEnabled { get => Get<bool>(); set => Set(value); }
+
+        public string DisplayName => string.IsNullOrWhiteSpace(Name)
+            ? System.IO.Path.GetFileNameWithoutExtension(Path)
+            : Name;
     }
 }

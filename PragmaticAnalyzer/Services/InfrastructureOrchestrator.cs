@@ -488,18 +488,18 @@ namespace PragmaticAnalyzer.Services
                 SetVm.UpdateConfig?.Invoke(exploitDto.DateCreation.ToString("f"), DataType.Exploit);
             }
 
-            var outcomesDto = await _fileService.LoadFileToPathAsync<DTO<Outcomes>>(GlobalConfig.OutcomesPath);
-            if (outcomesDto != default)
+            var outcomes = await _fileService.LoadDTOAsync<Outcomes>(GlobalConfig.OutcomesPath, DataType.Outcomes);
+            if (outcomes != default)
             {
-                foreach (var technology in outcomesDto.Value.Technologys)
+                foreach (var technology in outcomes.Technologys)
                 {
                     OutcomeVm.Outcomes.Technologys.Add(technology);
                 }
-                foreach (var consequence in outcomesDto.Value.Consequences)
+                foreach (var consequence in outcomes.Consequences)
                 {
                     OutcomeVm.Outcomes.Consequences.Add(consequence);
                 }
-                SetVm.UpdateConfig?.Invoke(outcomesDto.DateCreation.ToString("f"), DataType.Outcomes);
+                SetVm.UpdateConfig?.Invoke(File.GetLastWriteTime(GlobalConfig.OutcomesPath).ToString("f"), DataType.Outcomes);
             }
 
             var specialistDto = await _fileService.LoadFileToPathAsync<DTO<ObservableCollection<Specialist>>>(GlobalConfig.SpecialistPath);

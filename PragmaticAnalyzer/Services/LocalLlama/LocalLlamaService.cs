@@ -10,6 +10,7 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -415,6 +416,9 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             var safeGpuLayerCount = gpuLayerCount < 0 ? 0 : gpuLayerCount;
             var safeBatchSize = batchSize <= 0 ? 512 : batchSize;
             var safeMicroBatchSize = microBatchSize <= 0 ? 512 : microBatchSize;
+            var safeThreadCount = threadCount <= 0
+                ? Math.Max(4, Math.Min(Environment.ProcessorCount - 2, 10))
+                : threadCount;
 
             var workingDirectory = Path.GetDirectoryName(serverPath)
                 ?? Environment.CurrentDirectory;
@@ -425,12 +429,24 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
             CurrentLogPath = CreateSessionLogPath();
             var logPath = CurrentLogPath;
+            var launchDiagnostics = BuildLaunchDiagnostics(
+                serverPath,
+                workingDirectory,
+                modelPath,
+                modelArgument,
+                logPath,
+                safeContextSize,
+                safeGpuLayerCount,
+                safeThreadCount,
+                safeBatchSize,
+                safeMicroBatchSize);
 
             File.AppendAllText(
                 logPath,
                 $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Starting llama-server: {serverPath}{Environment.NewLine}" +
                 $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Model full path: {modelPath}{Environment.NewLine}" +
-                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Model argument: {modelArgument}{Environment.NewLine}");
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Model argument: {modelArgument}{Environment.NewLine}" +
+                launchDiagnostics);
 
             var processStartInfo = new ProcessStartInfo
             {
@@ -473,12 +489,6 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             processStartInfo.ArgumentList.Add("--cache-prompt");
 
             processStartInfo.ArgumentList.Add("--no-webui");
-
-            // Явно задаём потоки CPU.
-            // Если в конфиге 0, подбираем умеренное значение автоматически.
-            var safeThreadCount = threadCount <= 0
-                ? Math.Max(4, Math.Min(Environment.ProcessorCount - 2, 10))
-                : threadCount;
 
             processStartInfo.ArgumentList.Add("-t");
             processStartInfo.ArgumentList.Add(safeThreadCount.ToString());
@@ -560,10 +570,13 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
                 if (_serverProcess != null && _serverProcess.HasExited)
                 {
+                    await Task.Delay(300, ct);
                     var logTail = ReadLogTail(CurrentLogPath);
 
-                    throw new InvalidOperationException(
-                        $"llama-server завершился до готовности. Код выхода: {_serverProcess.ExitCode}.{Environment.NewLine}{logTail}");
+                    throw new InvalidOperationException(BuildServerExitMessage(
+                        _serverProcess.ExitCode,
+                        logTail,
+                        CurrentLogPath));
                 }
 
                 var healthReady = false;
@@ -1021,12 +1034,294 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
         private static string CreateSessionLogPath()
         {
-            var logsPath = Path.Combine(Environment.CurrentDirectory, "Logs");
-            Directory.CreateDirectory(logsPath);
+            var logsPath = GetWritableLogDirectory();
 
             return Path.Combine(
                 logsPath,
                 $"llama-server-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        }
+
+        private static string GetWritableLogDirectory()
+        {
+            var localAppData = Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData);
+
+            var candidates = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(localAppData))
+            {
+                candidates.Add(Path.Combine(localAppData, "PragmaticAnalyzer", "Logs"));
+            }
+
+            candidates.Add(Path.Combine(Path.GetTempPath(), "PragmaticAnalyzer", "Logs"));
+
+            foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                if (CanWriteDirectory(candidate))
+                {
+                    return candidate;
+                }
+            }
+
+            throw new UnauthorizedAccessException(
+                "Не удалось создать папку логов ни в LocalAppData, ни во временной папке Windows.");
+        }
+
+        private static bool CanWriteDirectory(string directoryPath)
+        {
+            try
+            {
+                Directory.CreateDirectory(directoryPath);
+
+                var probePath = Path.Combine(
+                    directoryPath,
+                    $".write-test-{Guid.NewGuid():N}.tmp");
+
+                File.WriteAllText(probePath, "ok");
+                File.Delete(probePath);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static string BuildLaunchDiagnostics(
+            string serverPath,
+            string workingDirectory,
+            string modelPath,
+            string modelArgument,
+            string logPath,
+            int contextSize,
+            int gpuLayerCount,
+            int threadCount,
+            int batchSize,
+            int microBatchSize)
+        {
+            var lines = new List<string>
+            {
+                $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Diagnostics:",
+                $"  App directory: {Environment.CurrentDirectory}",
+                $"  App directory writable: {CanWriteDirectory(Environment.CurrentDirectory)}",
+                $"  Log path: {logPath}",
+                $"  Server directory: {workingDirectory}",
+                $"  Server file readable: {CanReadFile(serverPath)}",
+                $"  Model file readable: {CanReadFile(modelPath)}",
+                $"  Arguments: -m {modelArgument} -c {contextSize} -t {threadCount} -b {batchSize} -ub {microBatchSize} -ngl {gpuLayerCount}",
+                $"  OS: {RuntimeInformation.OSDescription}",
+                $"  Process: {(Environment.Is64BitProcess ? "x64" : "x86")}",
+                $"  CPU threads visible: {Environment.ProcessorCount}",
+                $"  CPU SIMD: SSE4.1={Sse41.IsSupported}, AVX={Avx.IsSupported}, AVX2={Avx2.IsSupported}, FMA={Fma.IsSupported}"
+            };
+
+            if (File.Exists(modelPath))
+            {
+                var modelInfo = new FileInfo(modelPath);
+                lines.Add($"  Model size: {FormatBytes(modelInfo.Length)}");
+
+                if (modelInfo.Length < 100L * 1024 * 1024)
+                {
+                    lines.Add("  WARNING: GGUF-файл выглядит слишком маленьким; возможно, модель скопирована не полностью.");
+                }
+            }
+
+            if (TryGetMemoryStatus(out var totalPhysicalMemory, out var availablePhysicalMemory))
+            {
+                lines.Add($"  RAM total: {FormatBytes((long)totalPhysicalMemory)}");
+                lines.Add($"  RAM available: {FormatBytes((long)availablePhysicalMemory)}");
+
+                if (File.Exists(modelPath))
+                {
+                    var modelSize = new FileInfo(modelPath).Length;
+                    if (availablePhysicalMemory > 0 && availablePhysicalMemory < (ulong)(modelSize * 1.25))
+                    {
+                        lines.Add("  WARNING: свободной ОЗУ может быть мало для этой GGUF-модели.");
+                    }
+                }
+            }
+
+            var nativeDlls = Directory.Exists(workingDirectory)
+                ? Directory.EnumerateFiles(workingDirectory, "*.dll", SearchOption.TopDirectoryOnly)
+                    .Select(Path.GetFileName)
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
+                    .ToArray()
+                : [];
+
+            lines.Add(nativeDlls.Length == 0
+                ? "  WARNING: в NativeLlama не найдены DLL; если llama-server не статический, запуск сорвется."
+                : $"  NativeLlama DLL: {string.Join(", ", nativeDlls)}");
+
+            var missingRuntimeDlls = new[]
+                {
+                    "vcruntime140.dll",
+                    "vcruntime140_1.dll",
+                    "msvcp140.dll"
+                }
+                .Where(name => !CanFindDll(name, workingDirectory))
+                .ToArray();
+
+            if (missingRuntimeDlls.Length > 0)
+            {
+                lines.Add(
+                    "  WARNING: не найдены DLL Microsoft Visual C++ Runtime: " +
+                    string.Join(", ", missingRuntimeDlls) +
+                    ". На другом ПК может потребоваться Microsoft Visual C++ Redistributable 2015-2022 x64.");
+            }
+
+            if (gpuLayerCount > 0)
+            {
+                lines.Add(
+                    "  WARNING: GPU layers включены. Если на ПК нет подходящего драйвера/GPU backend, поставь GPU layers = 0 и запусти CPU-режим.");
+            }
+
+            if (!Environment.Is64BitProcess)
+            {
+                lines.Add("  ERROR: приложение запущено как x86. Для GGUF-модели нужен x64-процесс.");
+            }
+
+            if (!Avx.IsSupported)
+            {
+                lines.Add("  WARNING: CPU не сообщает поддержку AVX. Обычная сборка llama.cpp может не запуститься; нужна no-AVX/старшая совместимая сборка.");
+            }
+            else if (!Avx2.IsSupported)
+            {
+                lines.Add("  WARNING: CPU не сообщает поддержку AVX2. Если NativeLlama собран под AVX2, нужна AVX/no-AVX сборка llama.cpp.");
+            }
+
+            return string.Join(Environment.NewLine, lines) + Environment.NewLine;
+        }
+
+        private static bool CanReadFile(string path)
+        {
+            try
+            {
+                using var _ = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool CanFindDll(string dllName, string nativeDirectory)
+        {
+            if (File.Exists(Path.Combine(nativeDirectory, dllName)) ||
+                File.Exists(Path.Combine(Environment.SystemDirectory, dllName)))
+            {
+                return true;
+            }
+
+            var pathVariable = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
+
+            return pathVariable
+                .Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Any(directory =>
+                {
+                    try
+                    {
+                        return File.Exists(Path.Combine(directory, dllName));
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                });
+        }
+
+        private static string BuildServerExitMessage(
+            int exitCode,
+            string logTail,
+            string logPath)
+        {
+            var exitCodeHex = unchecked((uint)exitCode).ToString("X8");
+            var builder = new StringBuilder();
+
+            builder.AppendLine(
+                $"llama-server завершился до готовности. Код выхода: {exitCode} (0x{exitCodeHex}).");
+
+            var hint = GetExitCodeHint(exitCode);
+            if (!string.IsNullOrWhiteSpace(hint))
+            {
+                builder.AppendLine(hint);
+            }
+
+            builder.AppendLine($"Лог запуска: {logPath}");
+            builder.AppendLine("Что проверить на другом ПК:");
+            builder.AppendLine("1. Папка NativeLlama должна содержать llama-server.exe и DLL из той же сборки llama.cpp.");
+            builder.AppendLine("2. Установить Microsoft Visual C++ Redistributable 2015-2022 x64, если не хватает vcruntime/msvcp DLL.");
+            builder.AppendLine("3. Если CPU старый, использовать совместимую сборку llama-server: AVX, no-AVX или без AVX2.");
+            builder.AppendLine("4. Проверить, что GGUF-файл полностью скопирован в Translator и открывается на чтение.");
+            builder.AppendLine("5. Для первого запуска поставить GPU layers = 0, context = 2048-4096, batch = 256-512.");
+
+            if (!string.IsNullOrWhiteSpace(logTail))
+            {
+                builder.AppendLine();
+                builder.AppendLine(logTail);
+            }
+
+            return builder.ToString().Trim();
+        }
+
+        private static string GetExitCodeHint(int exitCode)
+        {
+            var exitCodeHex = unchecked((uint)exitCode);
+
+            return exitCodeHex switch
+            {
+                0xC0000005 => "Расшифровка: 0xC0000005 — native access violation. Обычно это несовместимая сборка llama-server/DLL, проблема GPU backend, поврежденная модель или нехватка памяти.",
+                0xC000001D => "Расшифровка: 0xC000001D — CPU не поддерживает инструкцию, под которую собран llama-server. Нужна AVX/no-AVX совместимая сборка.",
+                0xC0000135 => "Расшифровка: 0xC0000135 — Windows не нашла нужную DLL. Проверь DLL в NativeLlama и Microsoft Visual C++ Redistributable x64.",
+                0xC000007B => "Расшифровка: 0xC000007B — смешаны x86/x64 компоненты или битая native-зависимость. Нужна x64-сборка llama-server и x64 DLL.",
+                _ => string.Empty
+            };
+        }
+
+        private static string FormatBytes(long bytes)
+        {
+            string[] units = ["Б", "КБ", "МБ", "ГБ", "ТБ"];
+            var value = (double)Math.Max(0, bytes);
+            var unitIndex = 0;
+
+            while (value >= 1024 && unitIndex < units.Length - 1)
+            {
+                value /= 1024;
+                unitIndex++;
+            }
+
+            return $"{value:0.##} {units[unitIndex]}";
+        }
+
+        private static bool TryGetMemoryStatus(
+            out ulong totalPhysicalMemory,
+            out ulong availablePhysicalMemory)
+        {
+            totalPhysicalMemory = 0;
+            availablePhysicalMemory = 0;
+
+            try
+            {
+                var status = new MemoryStatusEx
+                {
+                    Length = (uint)Marshal.SizeOf<MemoryStatusEx>()
+                };
+
+                if (!GlobalMemoryStatusEx(ref status))
+                {
+                    return false;
+                }
+
+                totalPhysicalMemory = status.TotalPhys;
+                availablePhysicalMemory = status.AvailPhys;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static string ReadLogTail(string? logPath)
@@ -1118,6 +1413,23 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             public uint RemoteAddr;
             public uint RemotePort;
             public uint OwningPid;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx lpBuffer);
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MemoryStatusEx
+        {
+            public uint Length;
+            public uint MemoryLoad;
+            public ulong TotalPhys;
+            public ulong AvailPhys;
+            public ulong TotalPageFile;
+            public ulong AvailPageFile;
+            public ulong TotalVirtual;
+            public ulong AvailVirtual;
+            public ulong AvailExtendedVirtual;
         }
 
         public void Dispose()

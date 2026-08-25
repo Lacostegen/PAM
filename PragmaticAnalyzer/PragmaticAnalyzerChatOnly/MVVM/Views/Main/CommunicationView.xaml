@@ -210,10 +210,16 @@
                 </DockPanel>
 
                 <!-- Нижняя строка: настройки модели -->
-                <Grid Grid.Row="1"
-                      Margin="0,10,0,0">
-                    <Grid.Style>
-                        <Style TargetType="Grid">
+                <ScrollViewer x:Name="ModelSettingsScrollViewer"
+                              Grid.Row="1"
+                              Margin="0,10,0,0"
+                              MaxHeight="430"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              PanningMode="VerticalOnly"
+                              PreviewMouseWheel="ModelSettingsScrollViewer_PreviewMouseWheel">
+                    <ScrollViewer.Style>
+                        <Style TargetType="ScrollViewer">
                             <Setter Property="Visibility" Value="Collapsed" />
 
                             <Style.Triggers>
@@ -223,7 +229,9 @@
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </Grid.Style>
+                    </ScrollViewer.Style>
+
+                    <Grid>
 
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="130" />
@@ -232,6 +240,10 @@
                     </Grid.ColumnDefinitions>
 
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
@@ -460,15 +472,15 @@
                     </StackPanel>
 
                     <TextBlock Grid.Row="12"
-           Grid.Column="0"
-           Text="Режим ответа:"
-           VerticalAlignment="Center"
-           Margin="0,3" />
+                               Grid.Column="0"
+                               Text="Режим:"
+                               VerticalAlignment="Center"
+                               Margin="0,3" />
 
                     <ComboBox Grid.Row="12"
                               Grid.Column="1"
-                              ItemsSource="{Binding ResponseModes}"
-                              SelectedItem="{Binding ResponseMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              ItemsSource="{Binding ChatModes}"
+                              SelectedItem="{Binding ChatMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               Margin="3"
                               MinHeight="30" />
 
@@ -480,40 +492,171 @@
                               Margin="8,0,0,0" />
 
                     <TextBlock Grid.Row="13"
+           Grid.Column="0"
+           Text="Режим ответа:"
+           VerticalAlignment="Center"
+           Margin="0,3" />
+
+                    <ComboBox Grid.Row="13"
+                              Grid.Column="1"
+                              ItemsSource="{Binding ResponseModes}"
+                              SelectedItem="{Binding ResponseMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              Margin="3"
+                              MinHeight="30" />
+
+                    <TextBlock Grid.Row="14"
                                Grid.Column="0"
                                Text="RAG:"
                                VerticalAlignment="Center"
                                Margin="0,3" />
 
-                    <ComboBox Grid.Row="13"
+                    <ComboBox Grid.Row="14"
                               Grid.Column="1"
                               ItemsSource="{Binding RagModes}"
                               SelectedItem="{Binding RagMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               Margin="3"
                               MinHeight="30" />
 
-                    <TextBlock Grid.Row="14"
+                    <TextBlock Grid.Row="15"
+                               Grid.Column="0"
+                               Text="Модель арены:"
+                               VerticalAlignment="Center"
+                               Margin="0,3"
+                               Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Grid Grid.Row="15"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="2"
+                          Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ArenaModelPath, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource RoundedTextBoxStyle}"
+                                 Margin="3" />
+
+                        <Button Grid.Column="1"
+                                Content="Выбрать"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding SelectArenaModelPathCommand}" />
+
+                        <Button Grid.Column="2"
+                                Content="Добавить"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding AddArenaModelCommand}" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="16"
+                               Grid.Column="0"
+                               Text="Участники:"
+                               VerticalAlignment="Top"
+                               Margin="0,8,0,3"
+                               Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <ListBox Grid.Row="16"
+                             Grid.Column="1"
+                             ItemsSource="{Binding ArenaModels}"
+                             SelectedItem="{Binding SelectedArenaModel, Mode=TwoWay}"
+                             MinHeight="70"
+                             MaxHeight="100"
+                             Margin="3"
+                             Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                              VerticalAlignment="Center"
+                                              Margin="0,0,6,0" />
+
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding DisplayName}"
+                                               FontWeight="SemiBold"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"
+                                               Margin="0,0,8,0" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Path}"
+                                               Foreground="#666"
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button Grid.Row="16"
+                            Grid.Column="2"
+                            Content="Удалить"
+                            Style="{StaticResource OutlinedGrayButtonStyle}"
+                            Margin="3"
+                            VerticalAlignment="Top"
+                            Command="{Binding RemoveSelectedArenaModelCommand}"
+                            Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TextBlock Grid.Row="17"
+                               Grid.Column="0"
+                               Text="Модель-судья:"
+                               VerticalAlignment="Center"
+                               Margin="0,3"
+                               Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Grid Grid.Row="17"
+                          Grid.Column="1"
+                          Grid.ColumnSpan="2"
+                          Visibility="{Binding IsArenaMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding ArenaJudgeModelPath, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource RoundedTextBoxStyle}"
+                                 Margin="3" />
+
+                        <Button Grid.Column="1"
+                                Content="Выбрать"
+                                Style="{StaticResource OutlinedGrayButtonStyle}"
+                                Margin="3,0"
+                                Command="{Binding SelectArenaJudgeModelPathCommand}" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="18"
            Grid.Column="0"
            Text="История:"
            VerticalAlignment="Center"
            Margin="0,3"
            Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                    <TextBox Grid.Row="14"
+                    <TextBox Grid.Row="18"
          Grid.Column="1"
          Text="{Binding HistoryMessagesCount, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
          Margin="3"
          Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                    <TextBlock Grid.Row="15"
+                    <TextBlock Grid.Row="19"
            Grid.Column="0"
            Text="System prompt:"
            VerticalAlignment="Top"
            Margin="0,8,0,3"
            Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                    <TextBox Grid.Row="15"
+                    <TextBox Grid.Row="19"
          Grid.Column="1"
          Text="{Binding SystemPrompt, UpdateSourceTrigger=PropertyChanged}"
          Style="{StaticResource RoundedTextBoxStyle}"
@@ -524,19 +667,20 @@
          Margin="3"
          Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                    <TextBlock Grid.Row="16"
+                    <TextBlock Grid.Row="20"
                                Grid.Column="0"
                                Text="Лог:"
                                VerticalAlignment="Center"
                                Margin="0,3" />
 
-                    <TextBox Grid.Row="16"
+                    <TextBox Grid.Row="20"
                              Grid.Column="1"
                              Text="{Binding ModelLogPath}"
                              IsReadOnly="True"
                              Style="{StaticResource RoundedTextBoxStyle}"
                              Margin="3" />
                 </Grid>
+                </ScrollViewer>
             </Grid>
         </Border>
 

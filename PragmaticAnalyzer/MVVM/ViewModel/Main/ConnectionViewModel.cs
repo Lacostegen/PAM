@@ -276,6 +276,14 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
         public RelayCommand SettingSearchCommand => GetCommand(o =>
         {
+            EnsureDefaultReportSettings();
+
+            if (Consequences.Count == 0 || Technologys.Count == 0)
+            {
+                MessageBox.Show(
+                    "База рисков не загружена или загружена не полностью. Проверь файл outcomesDb.json во вкладке «Загрузить БД».");
+            }
+
             _settingSearchView = new(this);
             _settingSearchView.ShowDialog();
         });
@@ -306,6 +314,45 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     {
                         responseMatcher.Sources[source.Key] = originalPath;
                     }
+                }
+            }
+        }
+
+        private void EnsureDefaultReportSettings()
+        {
+            if (SelectedProtectionMeasures is null)
+            {
+                var protectionMeasure = ProtectionMeasures.FirstOrDefault();
+                if (protectionMeasure is not null)
+                {
+                    SelectedProtectionMeasures = protectionMeasure;
+                }
+            }
+
+            if (SelectedSpecialist is null)
+            {
+                var specialist = Specialists.FirstOrDefault();
+                if (specialist is not null)
+                {
+                    SelectedSpecialist = specialist;
+                }
+            }
+
+            if (SelectedConsequence is null)
+            {
+                var consequence = Consequences.FirstOrDefault();
+                if (consequence is not null)
+                {
+                    SelectedConsequence = consequence;
+                }
+            }
+
+            if (SelectedTechnology is null)
+            {
+                var technology = Technologys.FirstOrDefault();
+                if (technology is not null)
+                {
+                    SelectedTechnology = technology;
                 }
             }
         }

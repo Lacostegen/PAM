@@ -6,19 +6,238 @@
              xmlns:vm="clr-namespace:PragmaticAnalyzer.MVVM.ViewModel.Main"
              d:DataContext="{d:DesignInstance vm:ViewerViewModel}"
              mc:Ignorable="d"
-             d:DesignHeight="640"
-             d:DesignWidth="1200">
+              d:DesignHeight="640"
+              d:DesignWidth="1200">
+    <UserControl.Resources>
+        <Style x:Key="DiagramNodeButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource OutlinedGrayButtonStyle}">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Panel.ZIndex" Value="2" />
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Viewbox Stretch="Uniform">
             <Canvas Height="640"
                     Width="1200">
-                <Image Source="/Images/scheme.jpg"
-                       Height="640"
-                       Width="1200"
-                       Canvas.Top="3" />
+                <!-- Vector relationships stay sharp when the Viewbox scales the diagram. -->
+                <Canvas Width="1200"
+                        Height="640"
+                         IsHitTestVisible="False"
+                         Panel.ZIndex="0"
+                        TextOptions.TextFormattingMode="Display"
+                        TextOptions.TextHintingMode="Fixed"
+                        TextOptions.TextRenderingMode="ClearType">
+                    <Canvas.Resources>
+                        <SolidColorBrush x:Key="PositiveRelationshipBrush"
+                                         Color="#32A875" />
+                        <SolidColorBrush x:Key="NegativeRelationshipBrush"
+                                         Color="#ED3E4E" />
+                        <Style x:Key="RelationshipPathStyle"
+                               TargetType="Path">
+                            <Setter Property="StrokeThickness" Value="1.5" />
+                            <Setter Property="StrokeLineJoin" Value="Round" />
+                            <Setter Property="StrokeStartLineCap" Value="Round" />
+                            <Setter Property="StrokeEndLineCap" Value="Round" />
+                            <Setter Property="SnapsToDevicePixels" Value="True" />
+                        </Style>
+                        <Style x:Key="RelationshipLabelStyle"
+                               TargetType="TextBlock">
+                            <Setter Property="Background" Value="White" />
+                            <Setter Property="Padding" Value="3,1" />
+                            <Setter Property="FontFamily" Value="Segoe UI" />
+                            <Setter Property="FontSize" Value="10" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="UseLayoutRounding" Value="True" />
+                            <Setter Property="SnapsToDevicePixels" Value="True" />
+                        </Style>
+                    </Canvas.Resources>
 
-                <StackPanel Canvas.Left="0"
-                            Canvas.Top="225"
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 104,47 L 104,98 L 178,98 M 178,94 L 187,98 L 178,102 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 212,24 L 1088,24 L 1088,147 M 1084,147 L 1088,156 L 1092,147 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 982,24 L 982,367 L 1050,367 L 1050,393 M 1046,393 L 1050,402 L 1054,393 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 1088,203 L 1088,393 M 1084,393 L 1088,402 L 1092,393 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 407,98 L 830,98 L 830,216 M 826,216 L 830,225 L 834,216 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 407,109 L 524,109 L 524,140 M 520,140 L 524,149 L 528,140 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 286,121 L 286,405 M 282,405 L 286,414 L 290,405 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 315,121 L 315,405 L 523,405 L 523,476 M 519,476 L 523,485 L 527,476 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource PositiveRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 345,121 L 345,371 L 777,371 L 777,541 M 773,541 L 777,550 L 781,541 Z" />
+
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 629,172 L 770,172 L 770,216 M 766,216 L 770,225 L 774,216 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 777,550 L 777,342 L 524,342 L 524,204 M 520,204 L 524,195 L 528,204 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 817,550 L 817,279 M 813,279 L 817,270 L 821,279 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 900,248 L 936,248 L 936,393 M 932,393 L 936,402 L 940,393 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 208,361 L 271,361 L 271,405 M 267,405 L 271,414 L 275,405 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 290,459 L 290,508 L 407,508 M 407,504 L 416,508 L 407,512 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 520,531 L 520,574 L 661,574 M 661,570 L 670,574 L 661,578 Z" />
+                    <Path Style="{StaticResource RelationshipPathStyle}"
+                          Stroke="{StaticResource NegativeRelationshipBrush}"
+                          Fill="Transparent"
+                          Data="M 173,386 L 173,638 L 1050,638 L 1050,457 M 1046,457 L 1050,448 L 1054,457 Z" />
+
+                    <TextBlock Canvas.Left="68"
+                               Canvas.Top="103"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Предпринимает" />
+                    <TextBlock Canvas.Left="565"
+                               Canvas.Top="76"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Минимизируют" />
+                    <TextBlock Canvas.Left="430"
+                               Canvas.Top="111"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Уменьшают" />
+                    <TextBlock Canvas.Left="258"
+                               Canvas.Top="235"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Сокращают">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                    <TextBlock Canvas.Left="415"
+                               Canvas.Top="348"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Пресекают возможность использования" />
+                    <TextBlock Canvas.Left="369"
+                               Canvas.Top="382"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Редуцируют" />
+                    <TextBlock Canvas.Left="990"
+                               Canvas.Top="275"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Желает сократить">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                    <TextBlock Canvas.Left="1098"
+                               Canvas.Top="270"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Регулируют">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                    <TextBlock Canvas.Left="1098"
+                               Canvas.Top="60"
+                               Foreground="{StaticResource PositiveRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Формирует">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+
+                    <TextBlock Canvas.Left="659"
+                               Canvas.Top="149"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Порождают" />
+                    <TextBlock Canvas.Left="609"
+                               Canvas.Top="306"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Эксплуатируют" />
+                    <TextBlock Canvas.Left="216"
+                               Canvas.Top="338"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Порождает" />
+                    <TextBlock Canvas.Left="304"
+                               Canvas.Top="488"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Реализуют за счет" />
+                    <TextBlock Canvas.Left="535"
+                               Canvas.Top="552"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Могут использовать" />
+                    <TextBlock Canvas.Left="550"
+                               Canvas.Top="608"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Может нанести ущерб" />
+                    <TextBlock Canvas.Left="823"
+                               Canvas.Top="365"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Повышают">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                    <TextBlock Canvas.Left="946"
+                               Canvas.Top="254"
+                               Foreground="{StaticResource NegativeRelationshipBrush}"
+                               Style="{StaticResource RelationshipLabelStyle}"
+                               Text="Негативно влияют на">
+                        <TextBlock.LayoutTransform>
+                            <RotateTransform Angle="90" />
+                        </TextBlock.LayoutTransform>
+                    </TextBlock>
+                </Canvas>
+
+                <StackPanel Canvas.Left="-28"
+                            Canvas.Top="208"
                             Orientation="Horizontal">
                     <Border Width="205"
                             Height="26"
@@ -238,7 +457,7 @@
                 </Grid>
 
                 <Button Content="Специалист по ЗИ"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.SpecialistVm}"
                         Height="47"
@@ -246,7 +465,7 @@
                         Canvas.Left="-5" />
 
                 <Button Content="Меры защиты"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.ProtectionMeasureVm}"
                         Canvas.Left="187"
@@ -255,7 +474,7 @@
                         Width="220" />
 
                 <Button Content="Уязвимости"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.VulnerabilitieVm}"
                         Canvas.Left="419"
@@ -264,7 +483,7 @@
                         Width="210" />
 
                 <Button Content="Нарушитель"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.ViolatorVm}"
                         Canvas.Top="336"
@@ -273,7 +492,7 @@
                         Canvas.Left="-5" />
 
                 <Button Content="Угрозы"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.ThreatVm}"
                         Canvas.Left="185"
@@ -282,7 +501,7 @@
                         Width="210" />
 
                 <Button  Content="Техники и тактики"
-                         Style="{StaticResource OutlinedGrayButtonStyle}"
+                         Style="{StaticResource DiagramNodeButtonStyle}"
                          Command="{Binding SetCurrentViewCommand}"
                          CommandParameter="{Binding ViewModelsService.TacticVm}"
                          Canvas.Left="416"
@@ -291,7 +510,7 @@
                          Width="208" />
 
                 <Button Content="Риски ИБ"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.OutcomeVm}"
                         Canvas.Left="691"
@@ -300,7 +519,7 @@
                         Width="209" />
 
                 <Button Content="Эксплойты"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.ExploitVm}"
                         Canvas.Left="670"
@@ -309,7 +528,7 @@
                         Width="209" />
 
                 <Button  Content="Данные о текущем состоянии ПФ СОПКА"
-                         Style="{StaticResource OutlinedGrayButtonStyle}"
+                         Style="{StaticResource DiagramNodeButtonStyle}"
                          Command="{Binding SetCurrentViewCommand}"
                          CommandParameter="{Binding ViewModelsService.CurrentStatusVm}"
                          Canvas.Left="874"
@@ -319,7 +538,7 @@
 
                 <Button Content="Данные об эталонном состоянии ПФ СОПКА"
                         FontSize="8"
-                        Style="{StaticResource OutlinedGrayButtonStyle}"
+                        Style="{StaticResource DiagramNodeButtonStyle}"
                         Command="{Binding SetCurrentViewCommand}"
                         CommandParameter="{Binding ViewModelsService.ReferenceStatusVm}"
                         Canvas.Left="983"

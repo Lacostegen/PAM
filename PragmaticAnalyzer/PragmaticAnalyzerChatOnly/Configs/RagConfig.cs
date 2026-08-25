@@ -46,5 +46,37 @@ namespace PragmaticAnalyzer.Configs
         public bool UseExploits { get; set; } = true;
 
         public bool UseOutcomes { get; set; } = true;
+
+        public bool NormalizePortablePaths()
+        {
+            var changed = false;
+            var normalizedKnowledgeBasePath = ResolveDirectoryPath(KnowledgeBasePath, "KnowledgeBase");
+            var normalizedProjectDatabasePath = ResolveDirectoryPath(ProjectDatabasePath, "Database");
+
+            if (!string.Equals(KnowledgeBasePath, normalizedKnowledgeBasePath, StringComparison.OrdinalIgnoreCase))
+            {
+                KnowledgeBasePath = normalizedKnowledgeBasePath;
+                changed = true;
+            }
+
+            if (!string.Equals(ProjectDatabasePath, normalizedProjectDatabasePath, StringComparison.OrdinalIgnoreCase))
+            {
+                ProjectDatabasePath = normalizedProjectDatabasePath;
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private static string ResolveDirectoryPath(string configuredPath, string relativeDirectory)
+        {
+            if (!string.IsNullOrWhiteSpace(configuredPath) && Directory.Exists(configuredPath))
+            {
+                return configuredPath;
+            }
+
+            return Path.Combine(Environment.CurrentDirectory, relativeDirectory);
+        }
+
     }
 }
