@@ -11,6 +11,9 @@ namespace PragmaticAnalyzer.Enums
         WordTwoVec = 1,
 
         [Description("Tf-idf")]
-        TfIdf = 3      
+        TfIdf = 3,
+
+        [Description("GloVe + CVSS")]
+        GloVeCvss = 4
     } // перечисление AI-алгоритмов в программе
 }

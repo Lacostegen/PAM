@@ -10,6 +10,7 @@ namespace PragmaticAnalyzer.Services
         public const string WordFilter = "Word files (*.docx)|*.docx";
         public const string JsonFilter = "Json files (*.json)|*.json";
         public const string ModelFilter = "Model files (*.bin)|*.bin";
+        public const string GloVeModelSetFilter = "GloVe model set files (*.json;*.bin)|*.json;*.bin|All files (*.*)|*.*";
         public const string GgufModelFilter = "GGUF model files (*.gguf)|*.gguf|All files (*.*)|*.*";
         public const string ExeFilter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*";
 

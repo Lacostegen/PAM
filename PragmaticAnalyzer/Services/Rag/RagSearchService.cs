@@ -9,6 +9,17 @@ namespace PragmaticAnalyzer.Services.Rag
 {
     public class RagSearchService
     {
+        private static readonly HashSet<string> QueryStopWords = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "а", "без", "бы", "в", "вам", "вас", "ваш", "во", "вот", "все", "где",
+            "да", "дай", "для", "до", "его", "ее", "если", "есть", "же", "за", "зачем",
+            "и", "из", "или", "их", "как", "какая", "какие", "какой", "когда", "кто", "ли",
+            "мне", "может", "можно", "мы", "на", "над", "нам", "нас", "наш", "не", "него",
+            "нее", "нет", "но", "о", "об", "он", "она", "они", "оно", "от", "по", "под",
+            "при", "про", "расскажи", "с", "скажи", "со", "так", "такое", "такой", "то", "у",
+            "чем", "что", "чтобы", "это", "этот", "я", "занимается", "занимаются", "объясни"
+        };
+
         private readonly List<RagDocument> _documents = new();
 
         public IReadOnlyList<RagDocument> Documents => _documents;
@@ -65,6 +76,11 @@ namespace PragmaticAnalyzer.Services.Rag
 
             foreach (var document in candidates)
             {
+                if (!HasSufficientQueryCoverage(document, queryTokens, queryProfile))
+                {
+                    continue;
+                }
+
                 var score = CalculateScore(document, query, queryTokens);
                 score += CalculateProfileBoost(document, queryProfile);
 
@@ -1065,12 +1081,37 @@ namespace PragmaticAnalyzer.Services.Rag
             return string.Empty;
         }
 
+        private static bool HasSufficientQueryCoverage(
+            RagDocument document,
+            IReadOnlyCollection<string> queryTokens,
+            QueryProfile profile)
+        {
+            if (queryTokens.Count == 0)
+            {
+                return false;
+            }
+
+            if (profile.ExactIds.Count > 0)
+            {
+                return true;
+            }
+
+            var searchableText = Normalize(
+                $"{document.Id} {document.Source} {document.Type} {document.Product} " +
+                $"{document.Title} {document.Section} {document.SearchText}");
+            var matchedTokens = queryTokens.Count(searchableText.Contains);
+            var requiredMatches = queryTokens.Count >= 2 ? 2 : 1;
+
+            return matchedTokens >= requiredMatches;
+        }
+
         private static List<string> Tokenize(string text)
         {
             return Regex
                 .Split(Normalize(text), @"[^a-zа-яё0-9\-_:\.]+")
                 .Where(token => !string.IsNullOrWhiteSpace(token))
                 .Where(token => token.Length > 1)
+                .Where(token => !QueryStopWords.Contains(token))
                 .Distinct()
                 .ToList();
         }

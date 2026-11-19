@@ -16,6 +16,19 @@ namespace PragmaticAnalyzer.MVVM.Model
             doc.MarginLeft = 28.35f; // установка отступа слева
             doc.MarginRight = 28.35f; // установка отступа справа
 
+            if (!string.IsNullOrWhiteSpace(report.MatchReason))
+            {
+                Dictionary<string, string> fields = [];
+
+                fields.Add("Уверенность", report.MatchConfidence ?? string.Empty);
+                fields.Add("Итоговый коэффициент", report.Coefficient.ToString("0.###"));
+                fields.Add("Оценка уязвимости", report.VulnerabilityScore.ToString("0.###"));
+                fields.Add("Оценка угрозы", report.ThreatScore.ToString("0.###"));
+                fields.Add("Основание подбора", report.MatchReason);
+
+                AddTable(doc, fields, "Пояснение подбора GloVe + CVSS");
+            }
+
             if (report.ProtectionMeasure is not null)
             {
                 Dictionary<string, string> fields = [];

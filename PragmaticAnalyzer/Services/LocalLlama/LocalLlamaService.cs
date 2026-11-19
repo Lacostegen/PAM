@@ -59,6 +59,24 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
         public string CurrentLogPath { get; private set; } = string.Empty;
 
+        public bool LastStartupUsedCompatibilityMode { get; private set; }
+
+        public bool LastStartupUsedLowMemoryMode { get; private set; }
+
+        public bool LastStartupUsedCompactModel { get; private set; }
+
+        public string LastStartupWarning { get; private set; } = string.Empty;
+
+        public int LastAppliedContextSize { get; private set; }
+
+        public int LastAppliedThreadCount { get; private set; }
+
+        public int LastAppliedBatchSize { get; private set; }
+
+        public int LastAppliedMicroBatchSize { get; private set; }
+
+        public int LastAppliedGpuLayerCount { get; private set; }
+
         public bool IsWarmedUp { get; private set; }
 
         public TimeSpan LastWarmUpElapsed { get; private set; } = TimeSpan.Zero;
@@ -78,14 +96,16 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
             try
             {
-                var resolvedModelPath = ResolveRequiredModelPath(modelPath);
+                var requestedModelPath = ResolveRequiredModelPath(modelPath);
 
-                if (string.IsNullOrWhiteSpace(resolvedModelPath))
+                if (string.IsNullOrWhiteSpace(requestedModelPath))
                 {
                     throw new FileNotFoundException(
                         "GGUF-модель не найдена. " +
                         "Выбери существующий .gguf файл или положи модель в папку Translator рядом с exe.");
                 }
+
+                var resolvedModelPath = requestedModelPath;
 
                 if (IsLoaded &&
                     string.Equals(
@@ -114,13 +134,17 @@ namespace PragmaticAnalyzer.Services.LocalLlama
                 {
                     throw new FileNotFoundException(
                         "llama-server.exe не найден. " +
-                        "Положи llama-server.exe и все DLL из сборки llama.cpp в папку NativeLlama рядом с exe.");
+                        "Восстанови папку NativeLlama из комплекта программы.");
                 }
 
                 LoadedModelPath = resolvedModelPath;
                 NativeBackendPath = serverPath;
                 IsWarmedUp = false;
                 LastWarmUpElapsed = TimeSpan.Zero;
+                LastStartupUsedCompatibilityMode = false;
+                LastStartupUsedLowMemoryMode = false;
+                LastStartupUsedCompactModel = false;
+                LastStartupWarning = string.Empty;
 
                 _httpClient?.Dispose();
                 _httpClient = new HttpClient
@@ -410,7 +434,8 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             int gpuLayerCount,
             int threadCount,
             int batchSize,
-            int microBatchSize)
+            int microBatchSize,
+            bool lowMemoryMode = false)
         {
             var safeContextSize = contextSize <= 0 ? 4096 : contextSize;
             var safeGpuLayerCount = gpuLayerCount < 0 ? 0 : gpuLayerCount;
@@ -419,6 +444,12 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             var safeThreadCount = threadCount <= 0
                 ? Math.Max(4, Math.Min(Environment.ProcessorCount - 2, 10))
                 : threadCount;
+
+            LastAppliedContextSize = safeContextSize;
+            LastAppliedGpuLayerCount = safeGpuLayerCount;
+            LastAppliedThreadCount = safeThreadCount;
+            LastAppliedBatchSize = safeBatchSize;
+            LastAppliedMicroBatchSize = safeMicroBatchSize;
 
             var workingDirectory = Path.GetDirectoryName(serverPath)
                 ?? Environment.CurrentDirectory;
@@ -488,6 +519,15 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
             processStartInfo.ArgumentList.Add("--cache-prompt");
 
+            if (lowMemoryMode)
+            {
+                processStartInfo.ArgumentList.Add("--no-warmup");
+                processStartInfo.ArgumentList.Add("--fit");
+                processStartInfo.ArgumentList.Add("off");
+                processStartInfo.ArgumentList.Add("--cache-ram");
+                processStartInfo.ArgumentList.Add("0");
+            }
+
             processStartInfo.ArgumentList.Add("--no-webui");
 
             processStartInfo.ArgumentList.Add("-t");
@@ -503,11 +543,10 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             processStartInfo.ArgumentList.Add("-ub");
             processStartInfo.ArgumentList.Add(safeMicroBatchSize.ToString());
 
-            if (safeGpuLayerCount > 0)
-            {
-                processStartInfo.ArgumentList.Add("-ngl");
-                processStartInfo.ArgumentList.Add(safeGpuLayerCount.ToString());
-            }
+            // Передаём и нулевое значение: новые версии llama.cpp могут
+            // по умолчанию включать максимально возможный GPU-offload.
+            processStartInfo.ArgumentList.Add("-ngl");
+            processStartInfo.ArgumentList.Add(safeGpuLayerCount.ToString());
 
             _serverProcess = new Process
             {
@@ -576,7 +615,8 @@ namespace PragmaticAnalyzer.Services.LocalLlama
                     throw new InvalidOperationException(BuildServerExitMessage(
                         _serverProcess.ExitCode,
                         logTail,
-                        CurrentLogPath));
+                        CurrentLogPath,
+                        NativeBackendPath));
                 }
 
                 var healthReady = false;
@@ -1145,14 +1185,24 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             var nativeDlls = Directory.Exists(workingDirectory)
                 ? Directory.EnumerateFiles(workingDirectory, "*.dll", SearchOption.TopDirectoryOnly)
                     .Select(Path.GetFileName)
+                    .OfType<string>()
                     .Where(name => !string.IsNullOrWhiteSpace(name))
                     .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
                     .ToArray()
                 : [];
 
-            lines.Add(nativeDlls.Length == 0
-                ? "  WARNING: в NativeLlama не найдены DLL; если llama-server не статический, запуск сорвется."
-                : $"  NativeLlama DLL: {string.Join(", ", nativeDlls)}");
+            var isStandaloneServer = IsLikelyStandaloneServer(serverPath, nativeDlls);
+            lines.Add(isStandaloneServer
+                ? "  Native backend: автономная статическая CPU-сборка; внешние DLL не требуются."
+                : nativeDlls.Length == 0
+                    ? "  WARNING: в NativeLlama не найдены DLL; комплект динамического llama-server может быть неполным."
+                    : $"  NativeLlama DLL: {string.Join(", ", nativeDlls)}");
+
+            if (File.Exists(serverPath))
+            {
+                var serverInfo = new FileInfo(serverPath);
+                lines.Add($"  Server size: {FormatBytes(serverInfo.Length)}");
+            }
 
             var missingRuntimeDlls = new[]
                 {
@@ -1163,7 +1213,7 @@ namespace PragmaticAnalyzer.Services.LocalLlama
                 .Where(name => !CanFindDll(name, workingDirectory))
                 .ToArray();
 
-            if (missingRuntimeDlls.Length > 0)
+            if (!isStandaloneServer && missingRuntimeDlls.Length > 0)
             {
                 lines.Add(
                     "  WARNING: не найдены DLL Microsoft Visual C++ Runtime: " +
@@ -1207,6 +1257,23 @@ namespace PragmaticAnalyzer.Services.LocalLlama
             }
         }
 
+        private static bool IsLikelyStandaloneServer(
+            string serverPath,
+            IReadOnlyCollection<string> nativeDlls)
+        {
+            try
+            {
+                // Поставляемая CPU-сборка статически связана и существенно больше DLL-stub в официальной сборке.
+                return nativeDlls.Count == 0 &&
+                       File.Exists(serverPath) &&
+                       new FileInfo(serverPath).Length >= 10L * 1024 * 1024;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private static bool CanFindDll(string dllName, string nativeDirectory)
         {
             if (File.Exists(Path.Combine(nativeDirectory, dllName)) ||
@@ -1235,7 +1302,8 @@ namespace PragmaticAnalyzer.Services.LocalLlama
         private static string BuildServerExitMessage(
             int exitCode,
             string logTail,
-            string logPath)
+            string logPath,
+            string serverPath)
         {
             var exitCodeHex = unchecked((uint)exitCode).ToString("X8");
             var builder = new StringBuilder();
@@ -1251,11 +1319,16 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
             builder.AppendLine($"Лог запуска: {logPath}");
             builder.AppendLine("Что проверить на другом ПК:");
-            builder.AppendLine("1. Папка NativeLlama должна содержать llama-server.exe и DLL из той же сборки llama.cpp.");
-            builder.AppendLine("2. Установить Microsoft Visual C++ Redistributable 2015-2022 x64, если не хватает vcruntime/msvcp DLL.");
-            builder.AppendLine("3. Если CPU старый, использовать совместимую сборку llama-server: AVX, no-AVX или без AVX2.");
-            builder.AppendLine("4. Проверить, что GGUF-файл полностью скопирован в Translator и открывается на чтение.");
-            builder.AppendLine("5. Для первого запуска поставить GPU layers = 0, context = 2048-4096, batch = 256-512.");
+            builder.AppendLine("1. Восстановить NativeLlama из комплекта: для поставляемой статической CPU-сборки достаточно llama-server.exe, DLL не нужны.");
+            builder.AppendLine("2. Проверить, что GGUF-файл скопирован полностью; для gemma-2b-it-Q4_K_M размер должен быть 1 630 481 312 байт.");
+            builder.AppendLine("3. Снять блокировку Windows с llama-server.exe и GGUF-файла в их свойствах и проверить журнал защиты Windows/антивируса.");
+            builder.AppendLine("4. Оставить GPU layers = 0, context = 2048, batch = 64, micro-batch = 32.");
+            builder.AppendLine("5. Если статический сервер тоже падает с 0xC0000005, проверить ОЗУ средством «Диагностика памяти Windows»: остальные native-зависимости в этой сборке уже исключены.");
+
+            if (File.Exists(serverPath))
+            {
+                builder.AppendLine($"llama-server.exe: {FormatBytes(new FileInfo(serverPath).Length)}.");
+            }
 
             if (!string.IsNullOrWhiteSpace(logTail))
             {
@@ -1272,7 +1345,7 @@ namespace PragmaticAnalyzer.Services.LocalLlama
 
             return exitCodeHex switch
             {
-                0xC0000005 => "Расшифровка: 0xC0000005 — native access violation. Обычно это несовместимая сборка llama-server/DLL, проблема GPU backend, поврежденная модель или нехватка памяти.",
+                0xC0000005 => "Расшифровка: 0xC0000005 — native access violation. В поставляемой статической CPU-сборке исключены OpenMP, GPU backend, внешние ggml-DLL и Visual C++ Runtime. Если сбой остался, вероятны повреждение файла при копировании, блокировка антивирусом/EDR или аппаратная ошибка памяти.",
                 0xC000001D => "Расшифровка: 0xC000001D — CPU не поддерживает инструкцию, под которую собран llama-server. Нужна AVX/no-AVX совместимая сборка.",
                 0xC0000135 => "Расшифровка: 0xC0000135 — Windows не нашла нужную DLL. Проверь DLL в NativeLlama и Microsoft Visual C++ Redistributable x64.",
                 0xC000007B => "Расшифровка: 0xC000007B — смешаны x86/x64 компоненты или битая native-зависимость. Нужна x64-сборка llama-server и x64 DLL.",

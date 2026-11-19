@@ -4,6 +4,10 @@ obj/
 publish/
 Publish/
 *.nupkg
+Installer/Package/
+Installer/.nuget/
+Installer/redist/
+Installer/*.exe
 
 # Visual Studio and local IDE files
 .vs/
@@ -40,3 +44,16 @@ PragmaticAnalyzerChatOnly/Registration/*.docx
 # OS files
 Thumbs.db
 Desktop.ini
+
+# Local working material, previews, and separate assistant experiments
+.docx-work/
+.szi-assistant-stage/
+.szi-index-probe/
+output/
+tmp/
+video_subtitles_work/
+tools/ffmpeg/
+PragmaticAnalyzerChatOnly.rar
+docs/manual_render_word*/
+__pycache__/
+*.pyc

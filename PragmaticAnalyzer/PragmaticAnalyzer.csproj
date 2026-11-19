@@ -7,6 +7,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Images\icon.ico</ApplicationIcon>
+    <AssemblyTitle>Система поддержки принятия решения специалистом по ЗИ</AssemblyTitle>
+    <Product>Система поддержки принятия решения специалистом по ЗИ</Product>
+    <Description>Система поддержки принятия решения специалистом по защите информации</Description>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <LangVersion>preview</LangVersion>
     <EnablePreviewFeatures>true</EnablePreviewFeatures>
   </PropertyGroup>
@@ -16,6 +22,10 @@
     <EmbeddedResource Remove="PragmaticAnalyzerChatOnly\**" />
     <None Remove="PragmaticAnalyzerChatOnly\**" />
     <Page Remove="PragmaticAnalyzerChatOnly\**" />
+    <Compile Remove="tmp\**" />
+    <EmbeddedResource Remove="tmp\**" />
+    <None Remove="tmp\**" />
+    <Page Remove="tmp\**" />
     <Compile Remove="Resource\**" />
     <EmbeddedResource Remove="Resource\**" />
     <None Remove="Resource\**" />
@@ -37,6 +47,13 @@
 
   <ItemGroup>
     <Content Include="Images\icon.ico" />
+    <Content Include="NativeLlama\**\*"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="SemanticSearchEngine\**\*"
+             Exclude="SemanticSearchEngine\glove_model.npz;SemanticSearchEngine\__pycache__\**\*"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
     <Content Include="Resource\**\*.pdf"
              CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

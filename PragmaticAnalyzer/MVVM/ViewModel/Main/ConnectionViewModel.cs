@@ -8,6 +8,7 @@ using PragmaticAnalyzer.Messages;
 using PragmaticAnalyzer.MVVM.Model;
 using PragmaticAnalyzer.MVVM.Views;
 using PragmaticAnalyzer.Services;
+using PragmaticAnalyzer.Services.SemanticSearch;
 using PragmaticAnalyzer.WorkingServer.Matcher;
 using System.Collections.ObjectModel;
 using System.Data;
@@ -24,6 +25,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
     {
         private readonly IInfrastructureOrchestrator _viewModelsService;
         private readonly IApiService _apiService;
+        private readonly SemanticSearchService _semanticSearchService;
         private readonly Dictionary<string, object> _filePathToDatabase;
         private SettingSearchView? _settingSearchView;
         private string? _wordTwoVecModelPath;
@@ -54,6 +56,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             WeakReferenceMessenger.Default.Register<WordTwoVecModelSelectedMessage>(this);
             _viewModelsService = viewModelsService;
             _apiService = apiService;
+            _semanticSearchService = new SemanticSearchService();
             AvailableDatabasesConfig = availableDatabasesConfig;
             _filePathToDatabase = filePathToDatabase;
             Reports = [];
@@ -77,6 +80,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             try
             {
+                if (SelectedAlgorithm == Algorithm.GloVeCvss)
+                {
+                    await GenerateSemanticReportAsync();
+                    return;
+                }
+
                 var serverResult = await _apiService.EnsureMatcherServerAvailableAsync();
                 if (!serverResult.IsSuccess)
                 {
@@ -231,6 +240,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             switch (SelectedAlgorithm)
             {
                 case Algorithm.TfIdf:
+                case Algorithm.GloVeCvss:
                     return string.Empty;
 
                 case Algorithm.FastText:
@@ -357,6 +367,98 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             }
         }
 
+        private async Task GenerateSemanticReportAsync()
+        {
+            SearchStatusText = "Готовлю поиск GloVe + CVSS...";
+
+            var selectedTypes = AvailableDatabasesConfig
+                .Where(config => config.IsChecked)
+                .Select(config => config.DetectedType)
+                .ToHashSet();
+
+            if (!selectedTypes.Contains(DataType.VulnerabilitiesFstec) || !selectedTypes.Contains(DataType.Threat))
+            {
+                SearchStatusText = "Для GloVe + CVSS нужны БД уязвимостей ФСТЭК и БД угроз.";
+                MessageBox.Show("Для алгоритма GloVe + CVSS включи в настройках поиска БД уязвимостей ФСТЭК и БД угроз.");
+                return;
+            }
+
+            var semanticResult = await _semanticSearchService.SearchAsync(
+                RequestText,
+                _viewModelsService.VulnerabilitieVm.VulnerabilitiesFstec,
+                _viewModelsService.ThreatVm.Threats,
+                FilteringCvss);
+
+            if (!semanticResult.IsSuccess)
+            {
+                SearchStatusText = "GloVe + CVSS не нашел результат.";
+                MessageBox.Show(semanticResult.ErrorMessage);
+                return;
+            }
+
+            var reports = GetSemanticReports(semanticResult.Value?.Matches);
+            if (reports.Count == 0)
+            {
+                SearchStatusText = "GloVe + CVSS не вернул надежные пары.";
+                MessageBox.Show(semanticResult.Value?.Message ?? "По заданному описанию не найдено надежных совпадений.");
+                return;
+            }
+
+            Reports.Clear();
+            foreach (var report in reports)
+            {
+                Reports.Add(report);
+            }
+
+            SearchStatusText = $"Отчет GloVe + CVSS сформирован. Вариантов: {Reports.Count}.";
+            ReportVisibility = Visibility.Visible;
+        }
+
+        private ObservableCollection<Report> GetSemanticReports(ObservableCollection<SemanticSearchMatch>? matches)
+        {
+            var reports = new ObservableCollection<Report>();
+            if (matches is null || matches.Count == 0)
+            {
+                return reports;
+            }
+
+            var vulnerabilitiesDict = _viewModelsService.VulnerabilitieVm.VulnerabilitiesFstec.ToDictionary(v => v.GuidId);
+            var threatsDict = _viewModelsService.ThreatVm.Threats.ToDictionary(t => t.GuidId);
+
+            foreach (var match in matches)
+            {
+                var report = new Report
+                {
+                    Coefficient = match.Coefficient,
+                    ProtectionMeasure = SelectedProtectionMeasures,
+                    Specialist = SelectedSpecialist,
+                    Consequence = SelectedConsequence,
+                    Technology = SelectedTechnology,
+                    DynamicRecords = [],
+                    MatchReason = match.Reason,
+                    MatchConfidence = match.Confidence,
+                    VulnerabilityScore = match.VulnerabilityScore,
+                    ThreatScore = match.ThreatScore
+                };
+
+                if (match.VulnerabilityGuid is Guid vulnerabilityGuid
+                    && vulnerabilitiesDict.TryGetValue(vulnerabilityGuid, out var vulnerability))
+                {
+                    report.Vulnerabilitie = vulnerability;
+                }
+
+                if (match.ThreatGuid is Guid threatGuid
+                    && threatsDict.TryGetValue(threatGuid, out var threat))
+                {
+                    report.Threat = threat;
+                }
+
+                reports.Add(report);
+            }
+
+            return reports;
+        }
+
         public ObservableCollection<Report>? GetReports(ObservableCollection<ResponseMatcher.MatcherObject> responseMatchers)
         {
             if (responseMatchers is null || responseMatchers.Count is 0)
@@ -471,5 +573,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         public Exploit? Exploit { get => Get<Exploit>(); set => Set(value); }
         public Violator? Violator { get => Get<Violator>(); set => Set(value); }
         public ObservableCollection<DynamicRecord>? DynamicRecords { get => Get<ObservableCollection<DynamicRecord>>(); set => Set(value); }
+        public string? MatchReason { get => Get<string>(); set => Set(value); }
+        public string? MatchConfidence { get => Get<string>(); set => Set(value); }
+        public float VulnerabilityScore { get => Get<float>(); set => Set(value); }
+        public float ThreatScore { get => Get<float>(); set => Set(value); }
     }
 }

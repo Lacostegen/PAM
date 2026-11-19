@@ -15,6 +15,10 @@ namespace PragmaticAnalyzer.Configs
         public static readonly string ModelsPath = Path.Combine(Environment.CurrentDirectory, "Models");
         public static readonly string ConfigPath = Path.Combine(Environment.CurrentDirectory, "Config");
         public static readonly string ResourcePath = Path.Combine(Environment.CurrentDirectory, "Resource");
+        public static readonly string SemanticSearchEnginePath = Path.Combine(Environment.CurrentDirectory, "SemanticSearchEngine");
+        public static readonly string GloVeVectorsPath = Path.Combine(SemanticSearchEnginePath, "glove_vectors.bin");
+        public static readonly string GloVeWordIndexPath = Path.Combine(SemanticSearchEnginePath, "glove_word_index.json");
+        public static readonly string GloVeShapePath = Path.Combine(SemanticSearchEnginePath, "glove_shape.json");
 
         //
         public static readonly string RagConfigPath = Path.Combine(Environment.CurrentDirectory, "Config", "ragConfig.json");

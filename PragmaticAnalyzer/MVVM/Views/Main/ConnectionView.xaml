@@ -170,6 +170,29 @@
 
                     <ScrollViewer Grid.Row="1">
                         <WrapPanel Orientation="Horizontal">
+                            <Border Style="{StaticResource MainBorderStyle}"
+                                    Visibility="{Binding MatchReason, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Пояснение подбора"
+                                               Style="{StaticResource MainTextBlockStyle}"
+                                               FontWeight="Bold"
+                                               FontSize="20" />
+
+                                    <WrapPanel>
+                                        <cc:LabeledValueBox LabelText="Уверенность"
+                                                            ValueText="{Binding MatchConfidence}" />
+
+                                        <cc:LabeledValueBox LabelText="Оценка уязвимости"
+                                                            ValueText="{Binding VulnerabilityScore}" />
+
+                                        <cc:LabeledValueBox LabelText="Оценка угрозы"
+                                                            ValueText="{Binding ThreatScore}" />
+
+                                        <cc:LabeledValueBox LabelText="Основание"
+                                                            ValueText="{Binding MatchReason}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
 
                             <!--БД Специалист по ЗИ-->
                             <Border Style="{StaticResource MainBorderStyle}"

@@ -105,6 +105,7 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <!-- Верхняя строка: статус и кнопки управления моделью -->
@@ -150,11 +151,6 @@
                         <TextBlock Text="{Binding ServerStatusText}"
                             FontWeight="Bold" />
 
-                        <TextBlock Text="{Binding RagStatusText}"
-                            FontSize="12"
-                            Foreground="#555"
-                            Margin="0,3,0,0" />
-
                         <TextBlock Text="{Binding GenerationStatusText}"
                                    FontSize="12"
                                    Foreground="#666"
@@ -162,45 +158,15 @@
                                    TextWrapping="Wrap"
                                    Visibility="{Binding IsSending, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <TextBlock Text="{Binding GenerationDiagnosticsText}"
-                                   FontSize="12"
-                                   Foreground="#444"
-                                   Margin="0,3,0,0"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Text="{Binding BenchmarkStatusText}"
-                                   FontSize="12"
-                                   Foreground="#444"
-                                   Margin="0,3,0,0"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Text="{Binding LastRequestSummaryText}"
-                                   FontSize="12"
-                                   Foreground="#444"
-                                   Margin="0,3,0,0"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Text="{Binding LastRagSourcesText}"
-                                   FontSize="12"
-                                   Foreground="#555"
-                                   Margin="0,3,0,0"
-                                   TextWrapping="Wrap" />
-
-                        <TextBlock Text="{Binding HardwareProfileText}"
-                                   FontSize="12"
-                                   Foreground="#555"
-                                   Margin="0,3,0,0"
-                                   TextWrapping="Wrap" />
-
                         <StackPanel Orientation="Horizontal"
-                                    Margin="0,6,0,0"
+                                     Margin="0,6,0,0"
                                     Visibility="{Binding IsModelLoading, Converter={StaticResource BoolToVisibilityConverter}}">
                             <ProgressBar Width="140"
                                          Height="6"
                                          IsIndeterminate="True"
                                          VerticalAlignment="Center" />
 
-                            <TextBlock Text="{Binding ServerStatusText}"
+                            <TextBlock Text="Загрузка модели..."
                                        FontSize="12"
                                        Foreground="#666"
                                        Margin="8,0,0,0"
@@ -209,9 +175,69 @@
                     </StackPanel>
                 </DockPanel>
 
+                <Expander Grid.Row="1"
+                          Header="Лог"
+                          IsExpanded="False"
+                          Margin="3,8,3,0"
+                          ToolTip="Показать техническую информацию о модели, RAG и последнем запросе">
+                    <Border Margin="0,4,0,0"
+                            Padding="8"
+                            BorderBrush="#B8B8B8"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Background="White">
+                        <ScrollViewer MaxHeight="220"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel>
+                                <TextBlock Text="{Binding RagStatusText}"
+                                           FontSize="12"
+                                           Foreground="#555"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="{Binding GenerationDiagnosticsText}"
+                                           FontSize="12"
+                                           Foreground="#444"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="{Binding BenchmarkStatusText}"
+                                           FontSize="12"
+                                           Foreground="#444"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="{Binding LastRequestSummaryText}"
+                                           FontSize="12"
+                                           Foreground="#444"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="{Binding LastRagSourcesText}"
+                                           FontSize="12"
+                                           Foreground="#555"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="{Binding HardwareProfileText}"
+                                           FontSize="12"
+                                           Foreground="#555"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <TextBlock Text="{Binding ModelLogPath, StringFormat='Файл журнала: {0}'}"
+                                           FontSize="12"
+                                           Foreground="#666"
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Expander>
+
                 <!-- Нижняя строка: настройки модели -->
                 <ScrollViewer x:Name="ModelSettingsScrollViewer"
-                              Grid.Row="1"
+                              Grid.Row="2"
                               Margin="0,10,0,0"
                               MaxHeight="430"
                               VerticalScrollBarVisibility="Auto"
@@ -486,9 +512,10 @@
 
                     <CheckBox Grid.Row="12"
                               Grid.Column="2"
-                              Content="Compact prompt"
+                              Content="Компактный системный промпт"
                               IsChecked="{Binding UseCompactSystemPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                               VerticalAlignment="Center"
+                              ToolTip="Использовать сокращённый набор системных инструкций: это уменьшает промпт и оставляет больше контекста для вопроса и RAG"
                               Margin="8,0,0,0" />
 
                     <TextBlock Grid.Row="13"
@@ -651,7 +678,7 @@
 
                     <TextBlock Grid.Row="19"
            Grid.Column="0"
-           Text="System prompt:"
+           Text="Системный промпт:"
            VerticalAlignment="Top"
            Margin="0,8,0,3"
            Visibility="{Binding IsChecked, ElementName=AdvancedSettingsToggleButton, Converter={StaticResource BoolToVisibilityConverter}}" />

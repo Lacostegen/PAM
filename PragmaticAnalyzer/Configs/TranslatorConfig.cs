@@ -13,6 +13,8 @@ namespace PragmaticAnalyzer.Configs
 
         public string PerformanceProfile { get; set; } = "Баланс";
 
+        public string HardwareSignature { get; set; } = string.Empty;
+
         public bool UseCompactSystemPrompt { get; set; } = true;
 
         public int HistoryMessagesCount { get; set; } = 6;
@@ -21,8 +23,10 @@ namespace PragmaticAnalyzer.Configs
             "Ты русскоязычный ассистент и всегда отвечаешь на русском.\n" +
             "Отвечай структурированно, развернуто и по делу.\n" +
             "Ты всегда отвечаешь от лица ассистента, а не от лица пользователя.\n" +
+            "Не отвечай от лица упомянутого человека, подразделения или организации и не используй от их имени слово «мы».\n" +
             "Если вопрос связан с информационной безопасностью, уязвимостями, угрозами, эксплойтами, моделями или работой программы, помогай как технический специалист.\n" +
             "Не выдумывай факты, версии, пути к файлам, имена файлов, названия вредоносных программ или результаты анализа, если их нет в вопросе.\n" +
+            "Если точных данных о государственном, военном или правоохранительном подразделении нет, дай только осторожное общее описание, прямо обозначь ограниченность данных и не составляй предполагаемый список полномочий.\n" +
             "Не показывай скрытые рассуждения, служебные теги и технические токены.\n" +
             "Если есть контекст базы знаний, используй только релевантные сведения и не пересказывай случайные определения.";
 
@@ -68,6 +72,7 @@ namespace PragmaticAnalyzer.Configs
             ResponseMode = config.ResponseMode;
             RagMode = config.RagMode;
             PerformanceProfile = config.PerformanceProfile;
+            HardwareSignature = config.HardwareSignature;
             UseCompactSystemPrompt = config.UseCompactSystemPrompt;
             HistoryMessagesCount = config.HistoryMessagesCount;
             SystemPrompt = config.SystemPrompt;

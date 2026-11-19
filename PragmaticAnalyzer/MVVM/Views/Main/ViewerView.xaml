@@ -65,7 +65,7 @@
                     <Path Style="{StaticResource RelationshipPathStyle}"
                           Stroke="{StaticResource PositiveRelationshipBrush}"
                           Fill="Transparent"
-                          Data="M 982,24 L 982,367 L 1050,367 L 1050,393 M 1046,393 L 1050,402 L 1054,393 Z" />
+                          Data="M 950,24 L 950,367 L 1050,367 L 1050,393 M 1046,393 L 1050,402 L 1054,393 Z" />
                     <Path Style="{StaticResource RelationshipPathStyle}"
                           Stroke="{StaticResource PositiveRelationshipBrush}"
                           Fill="Transparent"
@@ -89,7 +89,7 @@
                     <Path Style="{StaticResource RelationshipPathStyle}"
                           Stroke="{StaticResource PositiveRelationshipBrush}"
                           Fill="Transparent"
-                          Data="M 345,121 L 345,371 L 777,371 L 777,541 M 773,541 L 777,550 L 781,541 Z" />
+                          Data="M 345,121 L 345,371 L 730,371 L 730,541 M 726,541 L 730,550 L 734,541 Z" />
 
                     <Path Style="{StaticResource RelationshipPathStyle}"
                           Stroke="{StaticResource NegativeRelationshipBrush}"
@@ -122,7 +122,7 @@
                     <Path Style="{StaticResource RelationshipPathStyle}"
                           Stroke="{StaticResource NegativeRelationshipBrush}"
                           Fill="Transparent"
-                          Data="M 173,386 L 173,638 L 1050,638 L 1050,457 M 1046,457 L 1050,448 L 1054,457 Z" />
+                          Data="M 173,386 L 173,620 L 1050,620 L 1050,457 M 1046,457 L 1050,448 L 1054,457 Z" />
 
                     <TextBlock Canvas.Left="68"
                                Canvas.Top="103"
@@ -158,8 +158,8 @@
                                Foreground="{StaticResource PositiveRelationshipBrush}"
                                Style="{StaticResource RelationshipLabelStyle}"
                                Text="Редуцируют" />
-                    <TextBlock Canvas.Left="990"
-                               Canvas.Top="275"
+                    <TextBlock Canvas.Left="960"
+                               Canvas.Top="235"
                                Foreground="{StaticResource PositiveRelationshipBrush}"
                                Style="{StaticResource RelationshipLabelStyle}"
                                Text="Желает сократить">
@@ -192,7 +192,7 @@
                                Style="{StaticResource RelationshipLabelStyle}"
                                Text="Порождают" />
                     <TextBlock Canvas.Left="609"
-                               Canvas.Top="306"
+                               Canvas.Top="320"
                                Foreground="{StaticResource NegativeRelationshipBrush}"
                                Style="{StaticResource RelationshipLabelStyle}"
                                Text="Эксплуатируют" />
@@ -212,7 +212,7 @@
                                Style="{StaticResource RelationshipLabelStyle}"
                                Text="Могут использовать" />
                     <TextBlock Canvas.Left="550"
-                               Canvas.Top="608"
+                               Canvas.Top="590"
                                Foreground="{StaticResource NegativeRelationshipBrush}"
                                Style="{StaticResource RelationshipLabelStyle}"
                                Text="Может нанести ущерб" />
@@ -225,7 +225,7 @@
                             <RotateTransform Angle="90" />
                         </TextBlock.LayoutTransform>
                     </TextBlock>
-                    <TextBlock Canvas.Left="946"
+                    <TextBlock Canvas.Left="914"
                                Canvas.Top="254"
                                Foreground="{StaticResource NegativeRelationshipBrush}"
                                Style="{StaticResource RelationshipLabelStyle}"

@@ -60,7 +60,7 @@
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="150" />
+            <ColumnDefinition Width="190" />
             <ColumnDefinition Width="329*" />
             <ColumnDefinition Width="321*"/>
         </Grid.ColumnDefinitions>

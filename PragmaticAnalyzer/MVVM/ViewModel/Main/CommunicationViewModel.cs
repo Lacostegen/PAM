@@ -24,6 +24,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         private const string AutoRagMode = "Авто";
         private const string DisabledRagMode = "Без базы";
         private const string OnlyRagMode = "Только по базе";
+        private const string ApplicationDisplayName = "Система поддержки принятия решения специалистом по ЗИ";
         private const string FastPerformanceProfile = "Быстро";
         private const string BalancedPerformanceProfile = "Баланс";
         private const string QualityPerformanceProfile = "Качество";
@@ -218,6 +219,11 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 _cts.Token);
 
             config ??= new TranslatorConfig();
+            var currentHardwareSignature = GetCurrentHardwareSignature();
+            var hardwareChanged = !string.Equals(
+                config.HardwareSignature,
+                currentHardwareSignature,
+                StringComparison.OrdinalIgnoreCase);
             var translatorConfigChanged = config.NormalizePortablePaths();
 
             ChatMode = NormalizeChatMode(config.ChatMode);
@@ -262,6 +268,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             WarmUpMaxTokens = Math.Clamp(config.ReadinessProbeMaxTokens <= 0 ? 3 : config.ReadinessProbeMaxTokens, 1, 3);
             SystemPrompt = NormalizeSystemPrompt(config.SystemPrompt);
 
+            if (hardwareChanged)
+            {
+                HardwareProfileText =
+                    "Обнаружен другой компьютер. Автоподбор отключён: модель и параметры запуска остаются такими, какие выбраны в настройках.";
+            }
+
             if (translatorConfigChanged)
             {
                 await _fileService.SaveFileAsync(
@@ -281,6 +293,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 ResponseMode = NormalizeResponseMode(ResponseMode),
                 RagMode = NormalizeRagMode(RagMode),
                 PerformanceProfile = NormalizePerformanceProfile(PerformanceProfile),
+                HardwareSignature = GetCurrentHardwareSignature(),
                 UseCompactSystemPrompt = UseCompactSystemPrompt,
                 LlamaServerPath = LlamaServerPath,
                 ModelPath = ModelPath,
@@ -533,14 +546,15 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 await EnsureLocalLlamaLoadedFromSettingsAsync(_cts.Token);
 
                 IsServerAvailable = true;
+                var compatibilitySuffix = GetStartupModeSuffix();
                 ServerStatusText =
-                    $"🟢 GGUF-модель загружена; warm-up {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}";
+                    $"🟢 GGUF-модель загружена; warm-up {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}{compatibilitySuffix}";
                 ModelLogPath = InfrastructureOrchestrator.LocalLlamaService.CurrentLogPath;
 
                 Messages.Add(new ChatMessage
                 {
                     Sender = MessageSender.Assistant,
-                    Text = $"✅ Модель загружена, endpoint проверен, warm-up выполнен за {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}."
+                    Text = $"✅ Модель загружена с выбранными настройками, endpoint проверен, warm-up выполнен за {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}."
                 });
             }
             catch (OperationCanceledException)
@@ -852,15 +866,36 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             if (memoryGb > 0 && memoryGb < 12)
             {
-                ContextSize = Math.Min(ContextSize, 4096);
+                GpuLayerCount = 0;
+                ContextSize = Math.Min(ContextSize, memoryGb < 10 ? 2048 : 4096);
                 MaxTokens = Math.Min(MaxTokens, 800);
                 HistoryMessagesCount = Math.Min(HistoryMessagesCount, 3);
                 _ragConfig.MaxTotalContextChars = Math.Min(_ragConfig.MaxTotalContextChars, 2500);
+                BatchSize = Math.Min(BatchSize, memoryGb < 10 ? 128 : 256);
+                MicroBatchSize = Math.Min(MicroBatchSize, memoryGb < 10 ? 64 : 128);
             }
             else if (memoryGb >= 24 && nvidiaGpu != null)
             {
                 ContextSize = Math.Max(ContextSize, 8192);
             }
+        }
+
+        private static string GetCurrentHardwareSignature()
+        {
+            return $"{Environment.MachineName}|{Environment.ProcessorCount}|{Environment.Is64BitOperatingSystem}";
+        }
+
+        private void ApplyCompatibilityStartupSettings()
+        {
+            GpuLayerCount = 0;
+            ContextSize = Math.Min(ContextSize <= 0 ? 4096 : ContextSize, 2048);
+            ThreadCount = Math.Clamp(
+                ThreadCount <= 0 ? Math.Max(1, Environment.ProcessorCount - 2) : ThreadCount,
+                1,
+                Math.Min(Math.Max(1, Environment.ProcessorCount), 6));
+            BatchSize = Math.Min(BatchSize <= 0 ? 512 : BatchSize, 128);
+            MicroBatchSize = Math.Min(MicroBatchSize <= 0 ? 512 : MicroBatchSize, 64);
+            HistoryMessagesCount = Math.Min(HistoryMessagesCount <= 0 ? 3 : HistoryMessagesCount, 3);
         }
 
         private static string BuildHardwareProfileText(
@@ -1858,7 +1893,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             string ragMode)
         {
             var system = new StringBuilder();
-            system.AppendLine("Ты модель-участник арены PragmaticAnalyzer.");
+            system.AppendLine($"Ты модель-участник арены программы «{ApplicationDisplayName}».");
             system.AppendLine("Ответь независимо, на русском языке, кратко и технически. Не упоминай арену, судью и другие модели.");
             system.AppendLine("Не повторяй одни и те же блоки текста. Не выдумывай CVE, BDU, версии, имена файлов, семейства ВПО и факты.");
             system.AppendLine(BuildRagModeInstruction(ragMode));
@@ -2061,7 +2096,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             var system = new StringBuilder();
             var isComparisonMode = successfulAnswers.Count == 2;
-            system.AppendLine("Ты модель-судья в режиме арены PragmaticAnalyzer.");
+            system.AppendLine($"Ты модель-судья в режиме арены программы «{ApplicationDisplayName}».");
             system.AppendLine("Сравни ответы моделей на русском языке. Не выдумывай факты, которых нет в вопросе, RAG-контексте или ответах участников.");
             system.AppendLine("Твоя задача — оценить не стиль текста, а совпадение важных тезисов, расхождения, пропуски и практический итог.");
             system.AppendLine(isComparisonMode
@@ -2255,8 +2290,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 }
 
                 IsServerAvailable = true;
+                var loadedModeSuffix = GetStartupModeSuffix();
                 ServerStatusText =
-                    $"🟢 GGUF-модель загружена; warm-up {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}";
+                    $"🟢 GGUF-модель загружена; warm-up {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}{loadedModeSuffix}";
                 return;
             }
 
@@ -2292,8 +2328,10 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             }
 
             IsServerAvailable = true;
+
+            var startupModeSuffix = GetStartupModeSuffix();
             ServerStatusText =
-                $"🟢 GGUF-модель загружена; warm-up {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}";
+                $"🟢 GGUF-модель загружена; warm-up {FormatDuration(InfrastructureOrchestrator.LocalLlamaService.LastWarmUpElapsed)}{startupModeSuffix}";
             ModelLogPath = InfrastructureOrchestrator.LocalLlamaService.CurrentLogPath;
             }
             finally
@@ -2305,6 +2343,14 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         private static async Task YieldToUiAsync()
         {
             await Dispatcher.Yield(DispatcherPriority.Background);
+        }
+
+        private static string GetStartupModeSuffix()
+        {
+            var service = InfrastructureOrchestrator.LocalLlamaService;
+            return service.LastAppliedContextSize > 0
+                ? $"; выбранные параметры: context {service.LastAppliedContextSize}, threads {service.LastAppliedThreadCount}, batch {service.LastAppliedBatchSize}/{service.LastAppliedMicroBatchSize}, GPU layers {service.LastAppliedGpuLayerCount}"
+                : string.Empty;
         }
 
         private static string BuildWaitingForFirstTokenStatus(
@@ -2751,7 +2797,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             var normalizedPrompt = NormalizeSystemPrompt(systemPrompt);
 
             builder.AppendLine("Сведения о программе и текущей модели:");
-            builder.AppendLine("- ты работаешь внутри WPF-программы PragmaticAnalyzer для анализа источников знаний по информационной безопасности;");
+            builder.AppendLine($"- ты работаешь внутри WPF-программы «{ApplicationDisplayName}» для анализа источников знаний по информационной безопасности;");
             builder.AppendLine("- ответы генерируются локальной GGUF-моделью через llama.cpp/llama-server;");
             builder.AppendLine($"- выбранная модель: {GetModelDisplayName(ModelPath)};");
             builder.AppendLine($"- загруженная модель: {GetLoadedModelDisplayName()};");
@@ -2805,12 +2851,49 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 ragContextText.Length,
                 responseMode);
 
-            messages.AddRange(conversationMessages.Select(message =>
+            var lastUserMessageIndex = conversationMessages.FindLastIndex(message =>
+                message.Sender == MessageSender.User);
+
+            messages.AddRange(conversationMessages.Select((message, index) =>
                 new LocalLlamaChatMessage(
                     message.Sender == MessageSender.User ? "user" : "assistant",
-                    message.Text)));
+                    index == lastUserMessageIndex
+                        ? BuildGuardedCurrentUserMessage(message.Text, ragContextText)
+                        : message.Text)));
 
             return messages;
+        }
+
+        private static string BuildGuardedCurrentUserMessage(string message, string ragContextText)
+        {
+            var builder = new StringBuilder(message.Trim());
+            builder.AppendLine();
+            builder.AppendLine();
+            builder.Append("Ответ дай только на русском языке и не отвечай от лица упомянутого человека, подразделения или организации.");
+
+            if (IsOrganizationQuestion(message))
+            {
+                builder.Append(' ');
+                builder.Append(string.IsNullOrWhiteSpace(ragContextText)
+                    ? "В базе знаний нет подтверждённых сведений об этой организации. Не придумывай перечень её функций: дай только осторожное общее пояснение, отметь ограниченность открытых данных и предложи уточнить официальный источник."
+                    : "Используй только прямо подтверждённые контекстом функции. Не дополняй их правдоподобными догадками; неподтверждённое обозначай как неизвестное.");
+            }
+
+            return builder.ToString();
+        }
+
+        private static bool IsOrganizationQuestion(string message)
+        {
+            var normalized = NormalizeRagQuestion(message);
+
+            return normalized.Contains("управлен") ||
+                   normalized.Contains("подразделен") ||
+                   normalized.Contains("ведомств") ||
+                   normalized.Contains("министерств") ||
+                   normalized.Contains("генеральн") ||
+                   normalized.Contains("служб") ||
+                   normalized.Contains("департамент") ||
+                   normalized.Contains("отдел");
         }
 
         private List<ChatMessage> BuildConversationMessages(
@@ -3095,7 +3178,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 OnlyRagMode =>
                     "RAG-режим: только по базе знаний. Используй только предоставленный контекст. Если в контексте нет точных данных, прямо напиши, что в базе знаний нет достаточной информации.",
                 _ =>
-                    "RAG-режим: авто. Если контекст базы знаний предоставлен, используй его как основной источник фактов; если контекста нет, отвечай как общий технический ассистент."
+                    "RAG-режим: авто. Используй контекст базы знаний только как подтверждающий источник, когда он прямо отвечает на вопрос. " +
+                    "Игнорируй фрагменты, совпавшие лишь по отдельным словам. Если точного ответа в контексте нет, отвечай как общий технический ассистент, " +
+                    "обозначай неопределённость и не выводи отсутствующие факты из соседних определений."
             };
         }
 
@@ -3107,13 +3192,14 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         {
             var builder = new StringBuilder();
 
-            builder.AppendLine("Ты ассистент PragmaticAnalyzer. Отвечай на русском, структурированно и по делу.");
+            builder.AppendLine($"Ты ассистент программы «{ApplicationDisplayName}». Отвечай на русском, структурированно и по делу.");
             builder.AppendLine("Не показывай chain-of-thought, reasoning_content, теги <think> и служебные токены.");
             builder.AppendLine("Не выдумывай ID, CVE, BDU, версии, пути, команды, настройки, имена файлов, названия ВПО и факты.");
             builder.AppendLine(BuildResponseModeInstruction(responseMode));
             builder.AppendLine(BuildRagModeInstruction(ragMode));
             builder.AppendLine("Для технических ответов используй: 1) краткий вывод; 2) что известно; 3) анализ; 4) действия/рекомендации; 5) ограничения.");
             builder.AppendLine("Если объясняешь термин, определение или правовое требование из RAG-контекста, указывай источник рядом с утверждением: [номер], название/источник, раздел или страницу при наличии.");
+            builder.AppendLine("О государственных, военных и правоохранительных подразделениях без точного подтверждения не составляй правдоподобные списки полномочий. Дай только осторожное общее описание, обозначь ограниченность данных, не отвечай от лица организации и не используй «мы».");
 
             var normalizedPrompt = NormalizeSystemPrompt(systemPrompt);
 
@@ -3132,6 +3218,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 builder.AppendLine();
                 builder.AppendLine("Используй только релевантные факты из контекста и не пересказывай нерелевантные определения. Если точного фрагмента нет, прямо скажи об этом. Не создавай отдельный раздел \"Факты из базы знаний\", если пользователь сам его не попросил. Для терминов из нормативных, правовых, методических документов или стандартов обязательно называй документ/источник из блока RAG.");
             }
+
+            builder.AppendLine();
+            builder.AppendLine("Финальный ответ пиши только на русском языке, даже если часть контекста или названий приведена на английском.");
 
             return builder.ToString().Trim();
         }
@@ -3154,7 +3243,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     ragMode);
             }
 
-            builder.AppendLine("Ты ассистент программы PragmaticAnalyzer.");
+            builder.AppendLine($"Ты ассистент программы «{ApplicationDisplayName}».");
             builder.AppendLine("Всегда отвечай на русском языке.");
             builder.AppendLine("Не показывай chain-of-thought, reasoning_content, теги <think> и служебные токены.");
             builder.AppendLine(BuildResponseModeInstruction(responseMode));
@@ -3169,6 +3258,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             builder.AppendLine("Если вопрос простой, отвечай короче, но сохраняй ясность.");
             builder.AppendLine("Не выдумывай ID, CVE, BDU, версии, настройки, пути, команды, имена файлов, названия ВПО и факты.");
             builder.AppendLine("Если объясняешь термин, определение или правовое требование из RAG-контекста, указывай источник рядом с утверждением: [номер], название/источник, раздел или страницу при наличии.");
+            builder.AppendLine("О государственных, военных и правоохранительных подразделениях без точного подтверждения не составляй правдоподобные списки полномочий. Дай только осторожное общее описание, обозначь ограниченность данных, не отвечай от лица организации и не используй «мы».");
             builder.AppendLine();
 
             var normalizedPrompt = NormalizeSystemPrompt(systemPrompt);
@@ -3193,6 +3283,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 builder.AppendLine("- Не называй конкретные семейства ВПО, инструменты, CVE/BDU и версии без подтверждения в вопросе или контексте.");
                 builder.AppendLine("- Для терминов из нормативных, правовых, методических документов или стандартов обязательно называй документ/источник из блока RAG.");
             }
+
+            builder.AppendLine();
+            builder.AppendLine("Финальный ответ пиши только на русском языке, даже если часть контекста или названий приведена на английском.");
 
             return builder.ToString().Trim();
         }

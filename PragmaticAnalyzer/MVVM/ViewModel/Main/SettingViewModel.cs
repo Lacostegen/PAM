@@ -10,6 +10,7 @@ using PragmaticAnalyzer.WorkingServer.Train;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 
@@ -21,6 +22,12 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         private readonly IFileService _fileService;
         private const string BinModelExtension = ".bin";
         private const string GgufModelExtension = ".gguf";
+        private static readonly string[] RequiredGloVeFiles =
+        [
+            "glove_vectors.bin",
+            "glove_word_index.json",
+            "glove_shape.json"
+        ];
 
         public ObservableCollection<ModelConfig> WordTwoVecConfigs { get; set; }
         public ObservableCollection<ModelConfig> FastTextConfigs { get; set; }
@@ -30,13 +37,16 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
         public bool ProgressWordTwoVec { get => Get<bool>(); set => Set(value); }
         public bool ProgressFastText { get => Get<bool>(); set => Set(value); }
+        public bool ProgressGloVe { get => Get<bool>(); set => Set(value); }
 
         public string WordTwoVecStatusText { get => Get<string>(); set => Set(value); }
         public string FastTextStatusText { get => Get<string>(); set => Set(value); }
+        public string GloVeStatusText { get => Get<string>(); set => Set(value); }
 
         public bool HasWordTwoVecModels => WordTwoVecConfigs.Count > 0;
 
         public bool HasFastTextModels => FastTextConfigs.Count > 0;
+        public bool HasGloVeModel => RequiredGloVeFiles.All(fileName => File.Exists(Path.Combine(GlobalConfig.SemanticSearchEnginePath, fileName)));
 
         public SettingViewModel(
             ObservableCollection<ModelConfig> wordTwoVecConfig,
@@ -50,6 +60,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
             ProgressWordTwoVec = false;
             ProgressFastText = false;
+            ProgressGloVe = false;
             RefreshModelAvailabilityStatus();
 
             WordTwoVecConfigs.CollectionChanged += OnModelsCollectionChanged;
@@ -541,6 +552,86 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             WeakReferenceMessenger.Default.Send(new WordTwoVecModelSelectedMessage(wordTwoVecModel?.Path));
         }
 
+        public RelayCommand UploadGloVeModelCommand => GetCommand(o =>
+        {
+            var selectedFile = DialogService.OpenFileDialog(DialogService.GloVeModelSetFilter, GlobalConfig.SemanticSearchEnginePath);
+            if (string.IsNullOrWhiteSpace(selectedFile))
+            {
+                GloVeStatusText = "Загрузка комплекта GloVe отменена.";
+                return;
+            }
+
+            ProgressGloVe = true;
+            GloVeStatusText = "Копирую комплект GloVe...";
+
+            try
+            {
+                var sourceDirectory = Path.GetDirectoryName(selectedFile)
+                    ?? throw new InvalidOperationException("Не удалось определить папку выбранного файла.");
+
+                foreach (var fileName in RequiredGloVeFiles)
+                {
+                    var sourcePath = Path.Combine(sourceDirectory, fileName);
+                    if (!File.Exists(sourcePath))
+                    {
+                        throw new FileNotFoundException(
+                            $"В выбранной папке нет обязательного файла {fileName}. Выбери файл из папки, где лежит полный комплект GloVe.",
+                            sourcePath);
+                    }
+                }
+
+                Directory.CreateDirectory(GlobalConfig.SemanticSearchEnginePath);
+                foreach (var fileName in RequiredGloVeFiles)
+                {
+                    File.Copy(
+                        Path.Combine(sourceDirectory, fileName),
+                        Path.Combine(GlobalConfig.SemanticSearchEnginePath, fileName),
+                        overwrite: true);
+                }
+
+                RefreshModelAvailabilityStatus();
+                GloVeStatusText = GetGloVeStatusText();
+            }
+            catch (Exception ex)
+            {
+                GloVeStatusText = "Ошибка загрузки комплекта GloVe.";
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                ProgressGloVe = false;
+            }
+        }, o => !ProgressGloVe);
+
+        public RelayCommand VerifyGloVeModelCommand => GetCommand(o =>
+        {
+            ProgressGloVe = true;
+            try
+            {
+                GloVeStatusText = GetGloVeStatusText();
+                MessageBox.Show(GloVeStatusText);
+            }
+            catch (Exception ex)
+            {
+                GloVeStatusText = "Ошибка проверки комплекта GloVe.";
+                MessageBox.Show(ex.Message);
+            }
+            finally
+            {
+                ProgressGloVe = false;
+            }
+        }, o => !ProgressGloVe);
+
+        public RelayCommand OpenGloVeFolderCommand => GetCommand(o =>
+        {
+            Directory.CreateDirectory(GlobalConfig.SemanticSearchEnginePath);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = GlobalConfig.SemanticSearchEnginePath,
+                UseShellExecute = true
+            });
+        });
+
         private async Task<bool> EnsureMatcherForModelOperationAsync(Action<string> setStatus)
         {
             setStatus("Проверяю matcher-сервер...");
@@ -848,6 +939,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
         {
             NotifyPropertyChanged(nameof(HasWordTwoVecModels));
             NotifyPropertyChanged(nameof(HasFastTextModels));
+            NotifyPropertyChanged(nameof(HasGloVeModel));
 
             if (!ProgressWordTwoVec)
             {
@@ -862,6 +954,27 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     ? $"FastText: моделей в списке {FastTextConfigs.Count}."
                     : "FastText: моделей нет. Нажми «Загрузить модель» или «Обучить модель».";
             }
+
+            if (!ProgressGloVe)
+            {
+                GloVeStatusText = GetGloVeStatusText();
+            }
+        }
+
+        private static string GetGloVeStatusText()
+        {
+            var missingFiles = RequiredGloVeFiles
+                .Where(fileName => !File.Exists(Path.Combine(GlobalConfig.SemanticSearchEnginePath, fileName)))
+                .ToList();
+
+            if (missingFiles.Count > 0)
+            {
+                return "GloVe + CVSS: комплект не готов. Нет файлов: " + string.Join(", ", missingFiles);
+            }
+
+            var vectorsSize = new FileInfo(GlobalConfig.GloVeVectorsPath).Length / 1024d / 1024d;
+            var indexSize = new FileInfo(GlobalConfig.GloVeWordIndexPath).Length / 1024d;
+            return $"GloVe + CVSS: комплект готов. Векторы: {vectorsSize:0.0} МБ, словарь: {indexSize:0} КБ. Используется во вкладке «Сформировать отчет».";
         }
     }
 
