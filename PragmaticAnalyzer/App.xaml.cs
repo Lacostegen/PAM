@@ -11,6 +11,7 @@ namespace PragmaticAnalyzer
             var infrastructureOrchestrator = new InfrastructureOrchestrator(); // создания экземпляра сервиса InfrastructureOrchestrator
             var mainVm = infrastructureOrchestrator.MainVm; // создания экземпляра MainVm
 
+            mainVm.OnSetCurrentView(infrastructureOrchestrator.ViewerVm);
             var mainView = new MainView(mainVm); // создание экземпляра MainView
             mainView.Show();
 

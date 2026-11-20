@@ -158,8 +158,7 @@
                 <Grid x:Name="ThreatSchemePanel"
                       Visibility="Collapsed"
                       d:Visibility="Visible"
-                      Background="White"
-                      PreviewMouseWheel="ThreatSchemeScrollViewer_PreviewMouseWheel">
+                      Background="White">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />

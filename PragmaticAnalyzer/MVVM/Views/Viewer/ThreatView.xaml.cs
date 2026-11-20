@@ -128,14 +128,8 @@ namespace PragmaticAnalyzer.MVVM.Views.Viewer
 
         private void ThreatSchemeScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (e.Delta > 0)
-            {
-                ChangeThreatSchemeScale(ThreatSchemeScaleStep);
-            }
-            else
-            {
-                ChangeThreatSchemeScale(-ThreatSchemeScaleStep);
-            }
+            DiagramZoom.AtPoint(ThreatSchemeScrollViewer, (UIElement)ThreatSchemeScrollViewer.Content,
+                e.GetPosition(ThreatSchemeScrollViewer), () => ChangeThreatSchemeScale(Math.Sign(e.Delta) * ThreatSchemeScaleStep));
 
             e.Handled = true;
         }

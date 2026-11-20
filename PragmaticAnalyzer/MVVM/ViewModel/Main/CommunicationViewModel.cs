@@ -5,6 +5,7 @@ using PragmaticAnalyzer.Enums;
 using PragmaticAnalyzer.MVVM.Model.Rag;
 using PragmaticAnalyzer.Services;
 using PragmaticAnalyzer.Services.LocalLlama;
+using PragmaticAnalyzer.Services.Rag;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
@@ -1487,7 +1488,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 }
 
                 totalStopwatch.Stop();
-                var assistantText = CleanAssistantText(answerBuilder.ToString());
+                var assistantText = RagAnswerSourcesFormatter.Append(
+                    CleanAssistantText(answerBuilder.ToString()), ragContextText);
                 GenerationStatusText = "Ответ получен.";
                 GenerationDiagnosticsText = BuildGenerationDiagnostics(
                     totalStopwatch.Elapsed,
@@ -1834,7 +1836,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     judgeMaxTokens);
 
                 SetTypingMessageText(
-                    BuildArenaFinalText(judgeResult, answers, arenaStopwatch.Elapsed));
+                    RagAnswerSourcesFormatter.Append(
+                        BuildArenaFinalText(judgeResult, answers, arenaStopwatch.Elapsed), ragContextText));
                 _typingMessage = null;
             }
             finally

@@ -43,13 +43,15 @@
                                  Value="True">
                             <Setter TargetName="border"
                                     Property="Background"
-                                    Value="#E0E0E0" />
+                                    Value="#C6E9E0" />
+                            <Setter Property="Foreground" Value="#132A26" />
                         </Trigger>
                         <Trigger Property="IsPressed"
                                  Value="True">
                             <Setter TargetName="border"
                                     Property="Background"
-                                    Value="#D0D0D0" />
+                                    Value="#94D8C7" />
+                            <Setter Property="Foreground" Value="#132A26" />
                         </Trigger>
                         <Trigger Property="IsEnabled"
                                  Value="False">

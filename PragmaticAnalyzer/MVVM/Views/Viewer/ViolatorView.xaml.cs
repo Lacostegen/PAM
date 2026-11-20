@@ -111,14 +111,8 @@ namespace PragmaticAnalyzer.MVVM.Views.Viewer
 
         private void SchemeScrollViewer_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (e.Delta > 0)
-            {
-                ChangeSchemeScale(SchemeScaleStep);
-            }
-            else
-            {
-                ChangeSchemeScale(-SchemeScaleStep);
-            }
+            DiagramZoom.AtPoint(SchemeScrollViewer, (UIElement)SchemeScrollViewer.Content,
+                e.GetPosition(SchemeScrollViewer), () => ChangeSchemeScale(Math.Sign(e.Delta) * SchemeScaleStep));
 
             e.Handled = true;
         }

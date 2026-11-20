@@ -7,32 +7,33 @@
              mc:Ignorable="d"
              d:DesignHeight="450"
              d:DesignWidth="800">
-    <Border BorderBrush="Black"
-            Background="White"
+    <Border BorderBrush="#354C53"
+            Background="#1B2A30"
             CornerRadius="6"
-            BorderThickness="2"
+            BorderThickness="1"
             Padding="10"
             Margin="5">
         <StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="{Binding LabelText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                           FontSize="18"
-                           FontFamily="Consolas"
-                           FontWeight="Bold"
-                           Margin="0 0 5 5"
-                           VerticalAlignment="Center"/>
-
-                <Button Content="📎"
+            <DockPanel LastChildFill="False">
+                <Button DockPanel.Dock="Right" Content="&#xE8C8;" FontFamily="Segoe MDL2 Assets"
                         Click="CopyButton_Click"
                         FontWeight="Normal"
                         ToolTip="Копировать"
                         Style="{StaticResource OutlinedGrayButtonStyle}" />
-            </StackPanel>
+                <TextBlock Text="{Binding LabelText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           TextWrapping="Wrap" Foreground="#80E9CC" FontSize="14"
+                           FontFamily="Segoe UI"
+                           FontWeight="Bold"
+                           Margin="0 0 5 5"
+                           VerticalAlignment="Center"/>
+
+
+            </DockPanel>
           
             <local:HighlightedTextBlock Text="{Binding ValueText, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         Segments="{Binding HighlightedValueSegments, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        FontSize="15"
-                                        FontFamily="Consolas"
+                                        Foreground="#EDF5F5" FontSize="15"
+                                        FontFamily="Segoe UI"
                                         TextWrapping="Wrap" />
         </StackPanel>
     </Border>

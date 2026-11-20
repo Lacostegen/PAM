@@ -17,11 +17,11 @@
         <assist:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
     </UserControl.Resources>
 
-    <Grid>
+    <Grid Background="#142025">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="180" />
+            <ColumnDefinition Width="0.65*" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="0.2*" />
+            <ColumnDefinition Width="0.24*" />
         </Grid.ColumnDefinitions>
 
         <Grid.RowDefinitions>
@@ -33,23 +33,23 @@
 
         <TextBlock Grid.Row="0"
                    Grid.Column="0"
-                   Text="Идентификатор:"
+                   Foreground="#DCEDEA" Text="{Binding DisplayedVulnerabilities.Count, StringFormat=Записей: {0}}"
                    Style="{StaticResource MainTextBlockStyle}" />
 
-        <ListBox Grid.Row="1"
-                 Grid.Column="0"
-                 VirtualizingStackPanel.IsVirtualizing="True"
-                 VirtualizingStackPanel.VirtualizationMode="Recycling"
-                 Style="{StaticResource RoundedListBoxStyle}"
-                 ItemContainerStyle="{StaticResource RoundedListBoxItemStyle}"
-                 ItemsSource="{Binding DisplayedVulnerabilities}"
-                 SelectedItem="{Binding SelectedVulnerabilitie}">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Identifier}" />
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
+        <DataGrid Grid.Row="1" Margin="4" Background="#19282E" Foreground="#E4F2F0"
+                  RowBackground="#19282E" AlternatingRowBackground="#1C2E34" GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="#34494F" BorderBrush="#456068" HeadersVisibility="Column"
+                  AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single"
+                  RowHeight="30" ItemsSource="{Binding DisplayedVulnerabilities}"
+                  SelectedItem="{Binding SelectedVulnerabilitie, Mode=TwoWay}">
+            <DataGrid.Resources>
+                <Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="#263B42"/><Setter Property="Foreground" Value="White"/><Setter Property="Padding" Value="5"/></Style>
+            </DataGrid.Resources>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Идентификатор" Binding="{Binding Identifier}" Width="Auto"/>
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
 
         <ComboBox Grid.Row="2"
                   Grid.Column="0"
@@ -73,7 +73,7 @@
                 Grid.Column="1"
                 Grid.RowSpan="3"
                 Margin="5"
-                BorderBrush="Black"
+                BorderBrush="#39525A"
                 BorderThickness="1"
                 CornerRadius="6">
             <ContentControl Content="{Binding CurrentView}"
@@ -102,7 +102,7 @@
 
         <TextBlock Grid.Row="0"
                    Grid.Column="2"
-                   Text="Ход выполнения:"
+                   Foreground="#DCEDEA" Text="Ход выполнения:"
                    Style="{StaticResource MainTextBlockStyle}" />
 
         <cc:FramedTextBlock Grid.Row="1"

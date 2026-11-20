@@ -14,21 +14,21 @@ namespace PragmaticAnalyzer.MVVM.Views.Main
             InitializeComponent();
             _vm = vm;
             DataContext = _vm;
-            Loaded += OnLoaded;
             Closing += OnClosing;
-        }
-
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            Loaded -= OnLoaded;
 
             var workArea = SystemParameters.WorkArea;
-            MaxWidth = workArea.Width;
-            MaxHeight = workArea.Height;
+            MinWidth = Math.Min(MinWidth, workArea.Width);
+            MinHeight = Math.Min(MinHeight, workArea.Height);
             Width = Math.Min(1280, workArea.Width);
             Height = Math.Min(720, workArea.Height);
-            Left = workArea.Left + Math.Max(0, (workArea.Width - Width) / 2);
-            Top = workArea.Top + Math.Max(0, (workArea.Height - Height) / 2);
+        }
+
+        private void Window_MouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            if (System.Windows.Input.Keyboard.Modifiers != System.Windows.Input.ModifierKeys.Control) return;
+            ShellZoom.ScaleX = ShellZoom.ScaleY = Math.Clamp(
+                Math.Round(ShellZoom.ScaleX + Math.Sign(e.Delta) * 0.1, 1), 0.6, 1.5);
+            e.Handled = true;
         }
 
         private async void OnClosing(object sender, CancelEventArgs e)
