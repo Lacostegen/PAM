@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.InformationView"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Main.InformationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -50,7 +50,7 @@
                                Margin="10"
                                FontSize="15"
                                TextWrapping="Wrap"
-                               FontFamily="Consolas"
+                               FontFamily="Segoe UI"
                                VerticalAlignment="Center"
                                Text="На этой вкладке вы сможете ознакомиться с информацией о работе алгоритма Fasttext" />
                 </Grid>
@@ -91,7 +91,7 @@
                                Margin="10"
                                FontSize="15"
                                TextWrapping="Wrap"
-                               FontFamily="Consolas"
+                               FontFamily="Segoe UI"
                                VerticalAlignment="Center"
                                Text="На этой вкладке вы сможете ознакомиться с информацией о работе алгоритма Word2Vec" />
                 </Grid>
@@ -132,7 +132,7 @@
                                Margin="10"
                                FontSize="15"
                                TextWrapping="Wrap"
-                               FontFamily="Consolas"
+                               FontFamily="Segoe UI"
                                VerticalAlignment="Center"
                                Text="На этой вкладке вы сможете ознакомиться с информацией о работе алгоритма Tf-Idf" />
                 </Grid>

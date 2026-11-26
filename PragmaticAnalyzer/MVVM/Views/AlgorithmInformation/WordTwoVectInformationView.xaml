@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.AlgorithmInformation.WordTwoVectInformationView"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.AlgorithmInformation.WordTwoVectInformationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -232,7 +232,7 @@
                         </StackPanel>
                     </Border>
 
-                    <Border BorderBrush="LightSteelBlue"
+                    <Border BorderBrush="{DynamicResource WorkspaceLine}"
                             BorderThickness="3"
                             CornerRadius="6"
                             Margin="5">
@@ -306,7 +306,7 @@
                     </Border>
                 </WrapPanel>
 
-                <Border BorderBrush="Black"
+                <Border BorderBrush="{DynamicResource WorkspaceLine}"
                         BorderThickness="3"
                         CornerRadius="6"
                         Margin="5">

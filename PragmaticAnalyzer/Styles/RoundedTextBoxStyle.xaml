@@ -5,13 +5,13 @@
         <Setter Property="FocusVisualStyle"
                 Value="{x:Null}" />
         <Setter Property="Background"
-                Value="White" />
+                Value="{DynamicResource WorkspaceSurface}" />
         <Setter Property="Margin"
                 Value="5" />
         <Setter Property="Foreground"
-                Value="#212121" />
+                Value="{DynamicResource WorkspaceText}" />
         <Setter Property="BorderBrush"
-                Value="#BDBDBD" />
+                Value="{DynamicResource WorkspaceLine}" />
         <Setter Property="BorderThickness"
                 Value="1" />
         <Setter Property="Padding"
@@ -46,24 +46,24 @@
                                  Value="True">
                             <Setter TargetName="BaseBorder"
                                     Property="BorderBrush"
-                                    Value="#9E9E9E" />
+                                    Value="{DynamicResource WorkspaceMuted}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused"
                                  Value="True">
                             <Setter TargetName="BaseBorder"
                                     Property="BorderBrush"
-                                    Value="Black" />
+                                    Value="{DynamicResource WorkspaceLine}" />
                         </Trigger>
                         <Trigger Property="IsEnabled"
                                  Value="False">
                             <Setter Property="Foreground"
-                                    Value="#9E9E9E" />
+                                    Value="{DynamicResource WorkspaceMuted}" />
                             <Setter TargetName="BaseBorder"
                                     Property="Background"
-                                    Value="#FAFAFA" />
+                                    Value="{DynamicResource WorkspaceSurface}" />
                             <Setter TargetName="BaseBorder"
                                     Property="BorderBrush"
-                                    Value="#E0E0E0" />
+                                    Value="{DynamicResource WorkspaceRaised}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -1,4 +1,4 @@
-﻿<Window x:Class="PragmaticAnalyzer.MVVM.Views.Main.OntologyManagerView"
+﻿<Window Background="{DynamicResource WorkspaceCanvas}" Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Main.OntologyManagerView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -20,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                BorderBrush="Black"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 Margin="2"
                 CornerRadius="6">
@@ -33,7 +33,7 @@
                 <TextBlock Grid.Row="0"
                            Text="Название"
                            FontSize="15"
-                           FontFamily="Consolas"
+                           FontFamily="Segoe UI"
                            Margin="0 5 5 5" />
 
                 <TextBox Grid.Row="1"
@@ -44,7 +44,7 @@
         </Border>
 
         <Border Grid.Row="1"
-                BorderBrush="Black"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 Margin="2"
                 CornerRadius="6">
@@ -57,7 +57,7 @@
                 <TextBlock Grid.Row="0"
                            Text="Описание"
                            FontSize="15"
-                           FontFamily="Consolas"
+                           FontFamily="Segoe UI"
                            Margin="0 5 5 5" />
 
                 <TextBox Grid.Row="1"
@@ -67,7 +67,7 @@
         </Border>
 
         <Border Grid.Row="2"
-                BorderBrush="Black"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 CornerRadius="6"
                 Margin="5">
@@ -85,7 +85,7 @@
                            Grid.Column="0"
                            Text="Добавить сущность в выбранную онтологию:"
                            FontSize="15"
-                           FontFamily="Consolas"
+                           FontFamily="Segoe UI"
                            TextWrapping="Wrap"
                            VerticalAlignment="Center" />
 

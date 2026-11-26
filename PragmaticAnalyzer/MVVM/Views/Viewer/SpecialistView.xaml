@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.SpecialistView"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.SpecialistView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -53,7 +53,7 @@
         <Border Grid.Row="1"
                 Grid.Column="1"
                 Margin="5"
-                BorderBrush="Black"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 CornerRadius="6">
             <WrapPanel  Visibility="{Binding SelectedSpecialist, Converter={StaticResource NullToVisibilityConverter}}">

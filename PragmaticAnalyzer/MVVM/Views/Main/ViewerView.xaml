@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.ViewerView"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Main.ViewerView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -52,10 +52,10 @@
                                     Grid.Column="1"
                                     BorderThickness="1,0,0,0"
                                     BorderBrush="#40575E"
-                                    Background="White"
+                                    Background="{DynamicResource WorkspaceSurface}"
                                     Padding="0"
                                     FontSize="13"
-                                    FontFamily="Consolas"
+                                    FontFamily="Segoe UI"
                                     ToolTip="{Binding SelectedDatabaseSearchMode}"
                                     Click="DatabaseSearchModeButton_Click">
                                 <TextBlock Text="⚙"
@@ -112,7 +112,7 @@
               <ListBoxItem Content="Данные о текущем состоянии ПФ СОПКА" Tag="{Binding ViewModelsService.CurrentStatusVm}"/>
               <ListBoxItem Content="Данные об эталонном состоянии ПФ СОПКА" Tag="{Binding ViewModelsService.ReferenceStatusVm}"/>
             </ListBox>
-            <ContentControl Background="White" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Content="{Binding SelectedItem.Tag, ElementName=Categories}"/>
+            <ContentControl Background="{DynamicResource WorkspaceSurface}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Content="{Binding SelectedItem.Tag, ElementName=Categories}"/>
           </DockPanel></TabItem>
           <TabItem Header="Схема связей" IsSelected="True">
           <Grid x:Name="DiagramArea" SizeChanged="Diagram_SizeChanged">

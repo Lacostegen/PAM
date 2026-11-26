@@ -1,0 +1,23 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="WorkspaceCanvas" Color="#10191D"/>
+    <SolidColorBrush x:Key="WorkspaceSurface" Color="#1B2A30"/>
+    <SolidColorBrush x:Key="WorkspaceRaised" Color="#263B42"/>
+    <SolidColorBrush x:Key="WorkspaceLine" Color="#456068"/>
+    <SolidColorBrush x:Key="WorkspaceText" Color="#E4F2F0"/>
+    <SolidColorBrush x:Key="WorkspaceMuted" Color="#AEC3C7"/>
+    <SolidColorBrush x:Key="WorkspaceAccent" Color="#64EBC3"/>
+    <SolidColorBrush x:Key="WorkspaceSelection" Color="#225347"/>
+    <Style x:Key="PaneDivider" TargetType="GridSplitter">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="ResizeDirection" Value="Columns"/>
+        <Setter Property="ResizeBehavior" Value="PreviousAndNext"/>
+        <Setter Property="ShowsPreview" Value="True"/>
+        <Setter Property="Cursor" Value="SizeWE"/>
+        <Setter Property="Background" Value="{StaticResource WorkspaceLine}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{StaticResource WorkspaceAccent}"/></Trigger>
+        </Style.Triggers>
+    </Style>
+</ResourceDictionary>

@@ -10,7 +10,7 @@
                                FontSize="{TemplateBinding FontSize}"
                                FontFamily="Franklin Gothic"
                                TextDecorations="Underline"
-                               Foreground="Blue"
+                               Foreground="{DynamicResource WorkspaceAccent}"
                                Cursor="Hand"
                                TextAlignment="Left"
                                VerticalAlignment="Center"
@@ -21,7 +21,7 @@
                                  Value="True">
                             <Setter TargetName="TextBlock"
                                     Property="Foreground"
-                                    Value="DodgerBlue" />
+                                    Value="{DynamicResource WorkspaceText}" />
                         </Trigger>
                         <Trigger Property="IsEnabled"
                                  Value="False">

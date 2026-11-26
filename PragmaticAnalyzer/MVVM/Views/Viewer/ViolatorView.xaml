@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.ViolatorView"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Viewer.ViolatorView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -116,7 +116,7 @@
         <Border Grid.Row="1"
                 Grid.Column="1"
                 Margin="5,5,5,5"
-                BorderBrush="Black"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 CornerRadius="6" Grid.ColumnSpan="2">
             <Grid>
@@ -158,7 +158,7 @@
                 <Grid x:Name="ViolatorSchemePanel"
                       Visibility="Collapsed"
                       d:Visibility="Visible"
-                      Background="White">
+                      Background="{DynamicResource WorkspaceSurface}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
@@ -324,10 +324,10 @@
 
                         <Border Grid.Column="1"
                                 Padding="12"
-                                BorderBrush="#BDBDBD"
+                                BorderBrush="{DynamicResource WorkspaceLine}"
                                 BorderThickness="1"
                                 CornerRadius="6"
-                                Background="#FAFAFA">
+                                Background="{DynamicResource WorkspaceSurface}">
                             <DockPanel LastChildFill="True">
                                 <TextBlock DockPanel.Dock="Top"
                                            Text="Информация по выбранному блоку"
@@ -341,7 +341,7 @@
                                            Text="Выберите блок схемы"
                                            FontWeight="SemiBold"
                                            FontSize="14"
-                                           Foreground="#1F4E79"
+                                           Foreground="{DynamicResource WorkspaceAccent}"
                                            Margin="0,0,0,8"
                                            TextWrapping="Wrap" />
 
@@ -349,7 +349,7 @@
                                     <TextBlock x:Name="SchemeNodeInfoDescription"
                                                Text="Нажмите на любой блок схемы модели нарушителей, чтобы увидеть его пояснение и роль в модели."
                                                FontSize="13"
-                                               Foreground="#333"
+                                               Foreground="{DynamicResource WorkspaceText}"
                                                TextWrapping="Wrap" />
                                 </ScrollViewer>
                             </DockPanel>

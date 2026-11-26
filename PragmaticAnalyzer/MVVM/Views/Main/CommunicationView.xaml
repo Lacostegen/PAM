@@ -1,4 +1,4 @@
-<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.CommunicationView"
+<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Main.CommunicationView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -13,15 +13,15 @@
         <Style x:Key="OutlinedGrayToggleButtonStyle"
                TargetType="ToggleButton">
             <Setter Property="Foreground"
-                    Value="#212121" />
+                    Value="{DynamicResource WorkspaceText}" />
             <Setter Property="Background"
-                    Value="White" />
+                    Value="{DynamicResource WorkspaceSurface}" />
             <Setter Property="Margin"
                     Value="5" />
             <Setter Property="Cursor"
                     Value="Hand" />
             <Setter Property="BorderBrush"
-                    Value="Black" />
+                    Value="{DynamicResource WorkspaceLine}" />
             <Setter Property="BorderThickness"
                     Value="1" />
             <Setter Property="Padding"
@@ -53,30 +53,30 @@
                                      Value="True">
                                 <Setter TargetName="border"
                                         Property="Background"
-                                        Value="#E0E0E0" />
+                                        Value="{DynamicResource WorkspaceRaised}" />
                             </Trigger>
                             <Trigger Property="IsPressed"
                                      Value="True">
                                 <Setter TargetName="border"
                                         Property="Background"
-                                        Value="#D0D0D0" />
+                                        Value="{DynamicResource WorkspaceSelection}" />
                             </Trigger>
                             <Trigger Property="IsChecked"
                                      Value="True">
                                 <Setter TargetName="border"
                                         Property="Background"
-                                        Value="#D8D8D8" />
+                                        Value="{DynamicResource WorkspaceSelection}" />
                             </Trigger>
                             <Trigger Property="IsEnabled"
                                      Value="False">
                                 <Setter Property="Foreground"
-                                        Value="#9E9E9E" />
+                                        Value="{DynamicResource WorkspaceMuted}" />
                                 <Setter TargetName="border"
                                         Property="Background"
-                                        Value="#F0F0F0" />
+                                        Value="{DynamicResource WorkspaceSurface}" />
                                 <Setter TargetName="border"
                                         Property="BorderBrush"
-                                        Value="#CCCCCC" />
+                                        Value="{DynamicResource WorkspaceLine}" />
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -96,10 +96,10 @@
         <Border Grid.Row="0"
                 Margin="5"
                 Padding="8"
-                BorderBrush="Black"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 CornerRadius="6"
-                Background="#F5F5F5">
+                Background="{DynamicResource WorkspaceCanvas}">
 
             <Grid>
                 <Grid.RowDefinitions>
@@ -153,7 +153,7 @@
 
                         <TextBlock Text="{Binding GenerationStatusText}"
                                    FontSize="12"
-                                   Foreground="#666"
+                                   Foreground="{DynamicResource WorkspaceMuted}"
                                    Margin="0,3,0,0"
                                    TextWrapping="Wrap"
                                    Visibility="{Binding IsSending, Converter={StaticResource BoolToVisibilityConverter}}" />
@@ -168,7 +168,7 @@
 
                             <TextBlock Text="Загрузка модели..."
                                        FontSize="12"
-                                       Foreground="#666"
+                                       Foreground="{DynamicResource WorkspaceMuted}"
                                        Margin="8,0,0,0"
                                        VerticalAlignment="Center" />
                         </StackPanel>
@@ -182,52 +182,52 @@
                           ToolTip="Показать техническую информацию о модели, RAG и последнем запросе">
                     <Border Margin="0,4,0,0"
                             Padding="8"
-                            BorderBrush="#B8B8B8"
+                            BorderBrush="{DynamicResource WorkspaceLine}"
                             BorderThickness="1"
                             CornerRadius="4"
-                            Background="White">
+                            Background="{DynamicResource WorkspaceSurface}">
                         <ScrollViewer MaxHeight="220"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Disabled">
                             <StackPanel>
                                 <TextBlock Text="{Binding RagStatusText}"
                                            FontSize="12"
-                                           Foreground="#555"
+                                           Foreground="{DynamicResource WorkspaceMuted}"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="{Binding GenerationDiagnosticsText}"
                                            FontSize="12"
-                                           Foreground="#444"
+                                           Foreground="{DynamicResource WorkspaceText}"
                                            Margin="0,4,0,0"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="{Binding BenchmarkStatusText}"
                                            FontSize="12"
-                                           Foreground="#444"
+                                           Foreground="{DynamicResource WorkspaceText}"
                                            Margin="0,4,0,0"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="{Binding LastRequestSummaryText}"
                                            FontSize="12"
-                                           Foreground="#444"
+                                           Foreground="{DynamicResource WorkspaceText}"
                                            Margin="0,4,0,0"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="{Binding LastRagSourcesText}"
                                            FontSize="12"
-                                           Foreground="#555"
+                                           Foreground="{DynamicResource WorkspaceMuted}"
                                            Margin="0,4,0,0"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="{Binding HardwareProfileText}"
                                            FontSize="12"
-                                           Foreground="#555"
+                                           Foreground="{DynamicResource WorkspaceMuted}"
                                            Margin="0,4,0,0"
                                            TextWrapping="Wrap" />
 
                                 <TextBlock Text="{Binding ModelLogPath, StringFormat='Файл журнала: {0}'}"
                                            FontSize="12"
-                                           Foreground="#666"
+                                           Foreground="{DynamicResource WorkspaceMuted}"
                                            Margin="0,4,0,0"
                                            TextWrapping="Wrap" />
                             </StackPanel>
@@ -617,7 +617,7 @@
 
                                     <TextBlock Grid.Column="2"
                                                Text="{Binding Path}"
-                                               Foreground="#666"
+                                               Foreground="{DynamicResource WorkspaceMuted}"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" />
                                 </Grid>
@@ -736,13 +736,13 @@
                                              BorderThickness="0"
                                              Background="Transparent"
                                              FontSize="16"
-                                             FontFamily="Consolas"
+                                             FontFamily="Segoe UI"
                                              FontWeight="Bold"
                                              Padding="0"
                                              Cursor="IBeam" />
 
                                 <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm'}"
-                                           Foreground="#888"
+                                           Foreground="{DynamicResource WorkspaceMuted}"
                                            FontSize="10"
                                            HorizontalAlignment="Right"
                                            Margin="0,4,0,0" />
@@ -753,7 +753,7 @@
                             <DataTrigger Binding="{Binding Sender}" Value="User">
                                 <Setter TargetName="MessageBorder"
                                         Property="Background"
-                                        Value="#4FC3F7" />
+                                        Value="{DynamicResource WorkspaceSelection}" />
                                 <Setter TargetName="MessageBorder"
                                         Property="HorizontalAlignment"
                                         Value="Right" />
@@ -768,7 +768,7 @@
                             <DataTrigger Binding="{Binding Sender}" Value="Assistant">
                                 <Setter TargetName="MessageBorder"
                                         Property="Background"
-                                        Value="#505050" />
+                                        Value="{DynamicResource WorkspaceSurface}" />
                                 <Setter TargetName="MessageBorder"
                                         Property="HorizontalAlignment"
                                         Value="Left" />

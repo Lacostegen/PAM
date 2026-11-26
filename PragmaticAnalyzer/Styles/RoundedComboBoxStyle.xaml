@@ -3,11 +3,11 @@
     <Style x:Key="RoundedComboBoxStyle"
            TargetType="ComboBox">
         <Setter Property="Foreground"
-                Value="#212121" />
+                Value="{DynamicResource WorkspaceText}" />
         <Setter Property="Background"
-                Value="White" />
+                Value="{DynamicResource WorkspaceSurface}" />
         <Setter Property="BorderBrush"
-                Value="Black" />
+                Value="{DynamicResource WorkspaceLine}" />
         <Setter Property="Margin"
                 Value="5" />
         <Setter Property="Cursor"
@@ -31,12 +31,18 @@
                                 Padding="{TemplateBinding Padding}"
                                 CornerRadius="6">
                             <ToggleButton x:Name="ToggleButton"
+                                          Foreground="{TemplateBinding Foreground}"
                                           Background="Transparent"
                                           BorderBrush="Transparent"
                                           BorderThickness="0"
                                           HorizontalAlignment="Stretch"
                                           VerticalAlignment="Stretch"
                                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="Transparent"><ContentPresenter/></Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -75,8 +81,8 @@
                                   MaxHeight="{TemplateBinding MaxDropDownHeight}"
                                   SnapsToDevicePixels="True">
                                 <Border x:Name="DropDownBorder"
-                                        Background="White"
-                                        BorderBrush="#BDBDBD"
+                                        Background="{DynamicResource WorkspaceSurface}"
+                                        BorderBrush="{DynamicResource WorkspaceLine}"
                                         BorderThickness="1"
                                         CornerRadius="6"
                                         Padding="0">
@@ -95,32 +101,32 @@
                                  Value="True">
                             <Setter TargetName="ToggleButtonBorder"
                                     Property="Background"
-                                    Value="#E0E0E0" />
+                                    Value="{DynamicResource WorkspaceRaised}" />
                             <Setter TargetName="ToggleButtonBorder"
                                     Property="BorderBrush"
-                                    Value="#9E9E9E" />
+                                    Value="{DynamicResource WorkspaceMuted}" />
                         </Trigger>
 
                         <Trigger Property="IsDropDownOpen"
                                  Value="True">
                             <Setter TargetName="ToggleButtonBorder"
                                     Property="Background"
-                                    Value="White" />
+                                    Value="{DynamicResource WorkspaceSurface}" />
                             <Setter TargetName="ToggleButtonBorder"
                                     Property="BorderBrush"
-                                    Value="#9E9E9E" />
+                                    Value="{DynamicResource WorkspaceMuted}" />
                         </Trigger>
 
                         <Trigger Property="IsEnabled"
                                  Value="False">
                             <Setter Property="Foreground"
-                                    Value="#9E9E9E" />
+                                    Value="{DynamicResource WorkspaceMuted}" />
                             <Setter TargetName="ToggleButtonBorder"
                                     Property="Background"
-                                    Value="#FAFAFA" />
+                                    Value="{DynamicResource WorkspaceSurface}" />
                             <Setter TargetName="ToggleButtonBorder"
                                     Property="BorderBrush"
-                                    Value="#E0E0E0" />
+                                    Value="{DynamicResource WorkspaceRaised}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

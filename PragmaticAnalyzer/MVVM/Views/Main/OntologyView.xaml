@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.OntologyView"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Main.OntologyView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -51,7 +51,7 @@
                              ValueText="{Binding SelectedItem.Description}"
                              Visibility="{Binding SelectedItem, Converter={StaticResource NullToVisibilityConverter}}" />
 
-        <Border BorderBrush="Black"
+        <Border BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 Padding="2"
                 Grid.Column="0"

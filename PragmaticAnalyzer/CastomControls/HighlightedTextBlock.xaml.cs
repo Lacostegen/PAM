@@ -103,6 +103,7 @@ namespace PragmaticAnalyzer.CastomControls
             if (isMatch)
             {
                 run.Background = HighlightBrush;
+                run.Foreground = Brushes.Black;
                 run.FontWeight = FontWeights.Bold;
             }
 

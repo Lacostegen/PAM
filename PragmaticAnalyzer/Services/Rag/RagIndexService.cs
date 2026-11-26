@@ -211,7 +211,9 @@ namespace PragmaticAnalyzer.Services.Rag
                 };
             }
 
-            var results = Search(query, config);
+            var results = MinistryReference.IsRelevant(query)
+                ? MinistryReference.Find(query).Take(config.TopK).ToList()
+                : Search(query, config);
             var contextText = _promptBuilder.BuildContext(results, config);
 
             return new RagAnswerContext

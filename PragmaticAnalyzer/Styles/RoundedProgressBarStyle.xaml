@@ -3,9 +3,9 @@
     <Style x:Key="RoundedProgressBarStyle"
            TargetType="ProgressBar">
         <Setter Property="Foreground"
-                Value="#4CAF50" />
+                Value="{DynamicResource WorkspaceAccent}" />
         <Setter Property="Background"
-                Value="#E0E0E0" />
+                Value="{DynamicResource WorkspaceRaised}" />
         <Setter Property="Margin"
                 Value="5" />
         <Setter Property="HorizontalAlignment"

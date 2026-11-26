@@ -1488,8 +1488,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 }
 
                 totalStopwatch.Stop();
-                var assistantText = RagAnswerSourcesFormatter.Append(
-                    CleanAssistantText(answerBuilder.ToString()), ragContextText);
+                var answerBody = CleanAssistantText(answerBuilder.ToString());
+                var assistantText = RagAnswerSourcesFormatter.Append(answerBody, ragContextText);
                 GenerationStatusText = "Ответ получен.";
                 GenerationDiagnosticsText = BuildGenerationDiagnostics(
                     totalStopwatch.Elapsed,
@@ -1512,6 +1512,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 if (_typingMessage != null && !string.IsNullOrWhiteSpace(assistantText))
                 {
                     _typingMessage.IsTyping = false;
+                    _typingMessage.AnswerBody = answerBody;
                     _typingMessage.Text = assistantText;
                     _typingMessage = null;
                     await YieldToUiAsync();
@@ -1522,6 +1523,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     Messages.Add(new ChatMessage
                 {
                     Sender = MessageSender.Assistant,
+                    AnswerBody = string.IsNullOrWhiteSpace(answerBody) ? null : answerBody,
                     Text = string.IsNullOrWhiteSpace(assistantText)
                         ? "⚠️ Модель вернула пустой финальный ответ. Останови модель и запусти её снова, чтобы применить параметры без thinking."
                         : assistantText
@@ -1835,9 +1837,9 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                     participantMaxTokens,
                     judgeMaxTokens);
 
-                SetTypingMessageText(
-                    RagAnswerSourcesFormatter.Append(
-                        BuildArenaFinalText(judgeResult, answers, arenaStopwatch.Elapsed), ragContextText));
+                var answerBody = BuildArenaFinalText(judgeResult, answers, arenaStopwatch.Elapsed);
+                SetTypingMessageText(RagAnswerSourcesFormatter.Append(answerBody, ragContextText));
+                if (_typingMessage != null) _typingMessage.AnswerBody = answerBody;
                 _typingMessage = null;
             }
             finally
@@ -2680,8 +2682,8 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
                 return new RagContextBuildResult();
             }
 
-            if (!InfrastructureOrchestrator.IsRagReady ||
-                InfrastructureOrchestrator.RagDocumentCount <= 0)
+            if (!MinistryReference.IsRelevant(userMessage) &&
+                (!InfrastructureOrchestrator.IsRagReady || InfrastructureOrchestrator.RagDocumentCount <= 0))
             {
                 return new RagContextBuildResult();
             }
@@ -2857,12 +2859,14 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
             var lastUserMessageIndex = conversationMessages.FindLastIndex(message =>
                 message.Sender == MessageSender.User);
 
+            var needsSources = System.Text.RegularExpressions.Regex.IsMatch(currentUserMessage,
+                @"(?i)источник|ссылк|документ|откуда|обосну|подтвер|основани|норматив|цитат|\[\d+\]|страниц|реквизит|проверь");
             messages.AddRange(conversationMessages.Select((message, index) =>
                 new LocalLlamaChatMessage(
                     message.Sender == MessageSender.User ? "user" : "assistant",
                     index == lastUserMessageIndex
                         ? BuildGuardedCurrentUserMessage(message.Text, ragContextText)
-                        : message.Text)));
+                        : (!needsSources && message.Sender == MessageSender.Assistant ? message.AnswerBody : null) ?? message.Text)));
 
             return messages;
         }
@@ -3439,6 +3443,7 @@ namespace PragmaticAnalyzer.MVVM.ViewModel.Main
 
     public class ChatMessage : ViewModelBase
     {
+        internal string? AnswerBody { get; set; }
         public MessageSender Sender { get; set; }
         public string Text { get => Get<string>(); set => Set(value); }
         public DateTime Timestamp { get; set; } = DateTime.Now;

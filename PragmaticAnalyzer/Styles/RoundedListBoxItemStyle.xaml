@@ -4,6 +4,7 @@
            TargetType="ListBoxItem">
         <Setter Property="Background"
                 Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource WorkspaceText}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
@@ -19,20 +20,20 @@
                                  Value="True">
                             <Setter TargetName="Bd"
                                     Property="Background"
-                                    Value="#E0E0E0" />
+                                    Value="{DynamicResource WorkspaceSelection}" />
                         </Trigger>
 
                         <Trigger Property="IsMouseOver"
                                  Value="True">
                             <Setter TargetName="Bd"
                                     Property="Background"
-                                    Value="#E0E0E0" />
+                                    Value="{DynamicResource WorkspaceRaised}" />
                         </Trigger>
 
                         <Trigger Property="IsEnabled"
                                  Value="False">
                             <Setter Property="Foreground"
-                                    Value="#9E9E9E" />
+                                    Value="{DynamicResource WorkspaceMuted}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

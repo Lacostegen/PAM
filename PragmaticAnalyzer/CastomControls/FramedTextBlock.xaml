@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="PragmaticAnalyzer.CastomControls.FramedTextBlock"
+﻿<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.CastomControls.FramedTextBlock"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,8 +8,8 @@
              d:DesignHeight="800"
              d:DesignWidth="400">
     <Border x:Name="ContainerBorder"
-            Background="White"
-            BorderBrush="Black"
+            Background="{DynamicResource WorkspaceSurface}"
+            BorderBrush="{DynamicResource WorkspaceLine}"
             BorderThickness="1"
             CornerRadius="6"
             Margin="5">
@@ -18,7 +18,7 @@
                       VerticalScrollBarVisibility="Auto"
                       Margin="5">
             <TextBlock x:Name="InnerTextBlock"
-                       FontFamily="Consolas"
+                       FontFamily="Segoe UI"
                        FontSize="14"
                        TextWrapping="Wrap"
                        VerticalAlignment="Top"

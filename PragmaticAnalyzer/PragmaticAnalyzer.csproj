@@ -47,6 +47,7 @@
 
   <ItemGroup>
     <Content Include="Images\icon.ico" />
+    <EmbeddedResource Include="Resource\References\Минобороны России.md" LogicalName="PragmaticAnalyzer.References.DefenceMinistry.md" />
     <Content Include="NativeLlama\**\*"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />

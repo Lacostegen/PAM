@@ -7,6 +7,6 @@
         <Setter Property="FontSize"
                 Value="14" />
         <Setter Property="FontFamily"
-                Value="Consolas" />
+                Value="Segoe UI" />
     </Style>
 </ResourceDictionary>

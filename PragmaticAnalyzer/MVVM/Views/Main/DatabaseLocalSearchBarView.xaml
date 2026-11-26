@@ -1,4 +1,4 @@
-<UserControl x:Class="PragmaticAnalyzer.MVVM.Views.Main.DatabaseLocalSearchBarView"
+<UserControl Foreground="{DynamicResource WorkspaceText}" x:Class="PragmaticAnalyzer.MVVM.Views.Main.DatabaseLocalSearchBarView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -14,8 +14,8 @@
                 Margin="4,0">
         <Border Width="250"
                 Height="28"
-                Background="White"
-                BorderBrush="Black"
+                Background="{DynamicResource WorkspaceSurface}"
+                BorderBrush="{DynamicResource WorkspaceLine}"
                 BorderThickness="1"
                 CornerRadius="6">
             <Grid>
@@ -29,7 +29,7 @@
                          Background="Transparent"
                          Padding="7,3"
                          FontSize="12"
-                         FontFamily="Consolas"
+                         FontFamily="Segoe UI"
                          VerticalContentAlignment="Center"
                          AcceptsReturn="False"
                          TextWrapping="NoWrap"
@@ -39,11 +39,11 @@
 
                 <Button Grid.Column="1"
                         BorderThickness="1,0,0,0"
-                        BorderBrush="Black"
-                        Background="White"
+                        BorderBrush="{DynamicResource WorkspaceLine}"
+                        Background="{DynamicResource WorkspaceSurface}"
                         Padding="0"
                         FontSize="13"
-                        FontFamily="Consolas"
+                        FontFamily="Segoe UI"
                         ToolTip="{Binding SelectedSearchMode}"
                         Click="SearchModeButton_Click">
                     <TextBlock Text="⚙"
